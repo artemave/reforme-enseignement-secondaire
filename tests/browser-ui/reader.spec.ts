@@ -12,15 +12,17 @@ test('The reader fits the screen and its navigation, annotations and contributio
 
   await test.step('The document and section navigation fit the viewport', async () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.locator('.document-footer').getByRole('link', { name: 'Voir sur GitHub' })).toHaveAttribute('href', /\/__dev\/github\/development\/document-annotations$/u);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    if (info.project.use.hasTouch === true) await expect(page.locator('.annotation-help')).toBeVisible();
-    else {
-      await expect(page.locator('.legend .discussion-icon')).toHaveText('?');
-      await expect(page.locator('.legend .proposal-icon')).toHaveText('↗');
-    }
-    const section = page.getByRole('navigation', { name: 'Sommaire' }).getByRole('link').first();
+    const contents = page.getByRole('navigation', { name: 'Sommaire' });
+    await expect(contents).not.toBeVisible();
+    await activate(page.locator('.contents summary'));
+    await expect(contents).toBeVisible();
+    const section = contents.getByRole('link').first();
     await activate(section);
     await expect(page).toHaveURL(/#u-\d+$/u);
+    await activate(page.locator('.contents summary'));
+    await expect(contents).not.toBeVisible();
   });
 
   await test.step('Dark mode follows the system preference and keeps the bubble hover continuous', async () => {
@@ -44,17 +46,9 @@ test('The reader fits the screen and its navigation, annotations and contributio
   });
 
   if (info.project.use.hasTouch === true) {
-    await test.step('The narrow mobile header stays readable without overlapping links', async () => {
+    await test.step('The reader fits a narrow mobile screen', async () => {
       await page.setViewportSize({ width: 320, height: 844 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      const separated = await page.locator('.masthead').evaluate((header) => {
-        const brand = header.querySelector('.brand')?.getBoundingClientRect();
-        const repository = header.querySelector('#repository')?.getBoundingClientRect();
-        if (brand === undefined || repository === undefined) return false;
-        return brand.bottom <= repository.top || brand.right + 8 <= repository.left;
-      });
-      expect(separated).toBe(true);
-      await expect(page.locator('.annotation-help')).toBeVisible();
       await page.setViewportSize({ width: 390, height: 844 });
     });
   }

@@ -23,7 +23,6 @@ export function render(index: AnnotationIndex, root: Document): void {
   const dialog = element<HTMLDialogElement>(root, '#annotations');
   units.replaceChildren(); contents.replaceChildren();
   element<HTMLAnchorElement>(root, '#repository').href = `https://github.com/${index.repository}`;
-  element<HTMLAnchorElement>(root, '#source').href = `https://github.com/${index.repository}/blob/${encodeURIComponent(index.branch)}/${index.documentPath.split('/').map(encodeURIComponent).join('/')}`;
   element<HTMLElement>(root, '#updated').textContent = `Actualisé le ${new Intl.DateTimeFormat('fr', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(index.generatedAt))}`;
   const open = (unit: Unit): void => {
     element<HTMLElement>(root, '#panel-title').textContent = unit.kind === 'paragraph' ? 'Discussion du passage' : unit.label;
