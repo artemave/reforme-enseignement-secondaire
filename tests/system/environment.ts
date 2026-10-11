@@ -48,8 +48,9 @@ export const test = base.extend<{ networkIsolation: Promise<void>; repositorySta
     await use(undefined);
   }, { auto: true }],
 });
+// Retry a connection reset on read-only requests; HTTP and assertion failures still fail.
 export async function published(page: Page) {
-  return indexSchema.parse(await (await page.request.get('/annotations.json')).json() as unknown);
+  return indexSchema.parse(await (await page.request.get('/annotations.json', { maxRetries: 1 })).json() as unknown);
 }
 export async function openInNewTab(page: Page, link: Locator): Promise<Page> {
   const opened = page.context().waitForEvent('page');
@@ -92,7 +93,7 @@ export function github(page: Page) {
       await page.locator('[data-bot-comment]').getByRole('link', { name: new RegExp(`^(?:Discussion|Issue|PR) #${String(number)}$`, 'u') }).click();
     },
     comments: async (number: number) => {
-      const state = z.object({ items: z.array(z.object({ number: z.number(), comments: z.array(z.object({ body: z.string() })) })) }).parse(await (await page.request.get('/__dev/state')).json() as unknown);
+      const state = z.object({ items: z.array(z.object({ number: z.number(), comments: z.array(z.object({ body: z.string() })) })) }).parse(await (await page.request.get('/__dev/state', { maxRetries: 1 })).json() as unknown);
       return state.items.find((item) => item.number === number)?.comments.map((comment) => comment.body) ?? [];
     },
     item: async () => ({

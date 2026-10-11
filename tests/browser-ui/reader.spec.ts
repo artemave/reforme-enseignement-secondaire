@@ -27,9 +27,10 @@ test('The reader fits the screen and its navigation, annotations and contributio
 
   await test.step('The theme switch persists across navigation and keeps the bubble hover continuous', async () => {
     await page.emulateMedia({ colorScheme: 'light' });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     const lightBackground = await page.locator('html').evaluate((element) => getComputedStyle(element).backgroundColor);
     await page.emulateMedia({ colorScheme: 'dark' });
-    expect(await page.locator('html').evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(lightBackground);
+    await expect.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(lightBackground);
     if (info.project.use.hasTouch !== true) {
       await learning.hover();
       const outline = learning.locator('.annotation-shape path');
