@@ -29,7 +29,7 @@ describe('static reader', () => {
     expect(button('#u-3').href).toBe('http://localhost:3000/passage/hash/u-3/');
     expect(button('#u-1').getAttribute('aria-haspopup')).toBeNull();
     expect(document.querySelector<HTMLElement>('#items')?.hidden).toBe(true);
-    expect(document.querySelector('#panel-title')?.textContent).toBe('Title');
+    expect(document.querySelector<HTMLElement>('#panel-title')?.hidden).toBe(true);
     expect(document.querySelector('#new-discussion')).toBeNull();
     expect(document.querySelector('#new-pr')).toBeNull();
 
@@ -43,6 +43,7 @@ describe('static reader', () => {
     expect(document.querySelector('#units blockquote')?.innerHTML).toBe(paragraph.html);
     expect(document.querySelectorAll('blockquote')).toHaveLength(1);
     expect(document.querySelector('#units')?.previousElementSibling?.id).toBe('panel-title');
+    expect(document.querySelector<HTMLElement>('#panel-title')?.hidden).toBe(false);
     expect(document.querySelector('.back-chevron')?.textContent).toBe('‹');
     expect(document.querySelector('.back-chevron')?.getAttribute('aria-hidden')).toBe('true');
     expect(document.querySelector('#annotations')?.textContent).not.toContain(paragraph.context);

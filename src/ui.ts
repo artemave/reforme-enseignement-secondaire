@@ -71,6 +71,7 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
   }
   const selected = target ?? index.units.find((unit) => unit.kind === 'title');
   discussionPage.hidden = selected === undefined;
+  element<HTMLElement>(root, '#panel-title').hidden = target === undefined;
   units.after(discussionPage);
   if (selected !== undefined) open(selected);
   if (target !== undefined) {
