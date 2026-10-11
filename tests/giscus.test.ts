@@ -1,0 +1,22 @@
+import { expect, it } from 'vitest';
+import { embedDiscussion } from '../src/giscus.js';
+import { index, unit } from './fixtures.js';
+const annotation = { number: 3, kind: 'discussion' as const, title: 'Question', url: 'https://github.com/a/b/discussions/3', targetId: 'u-1' };
+it('loads a specific discussion with public IDs and replaces the previous widget; other items retain GitHub links', () => {
+  const container = document.createElement('div');
+  embedDiscussion(index, annotation, document, container);
+  expect(container.children).toHaveLength(0);
+  const configured = { ...index, giscus: { repositoryId: 'repo', categoryId: 'cat', category: 'General', categorySlug: 'general', clientUrl: 'https://giscus.app/client.js' } };
+  embedDiscussion(configured, annotation, document, container);
+  expect(container.querySelector('script')?.getAttribute('data-mapping')).toBe('number');
+  expect(container.querySelector('script')?.getAttribute('data-term')).toBe('3');
+  embedDiscussion(configured, { ...annotation, number: 4 }, document, container);
+  expect(container.querySelector('script')?.getAttribute('data-term')).toBe('4');
+  expect(container.children).toHaveLength(1);
+  embedDiscussion(configured, unit, document, container);
+  expect(container.querySelector('script')?.getAttribute('data-mapping')).toBe('specific');
+  expect(container.querySelector('script')?.getAttribute('data-term')).toBe('hash/u-1: # Title');
+  expect(container.querySelector('script')?.getAttribute('data-strict')).toBe('1');
+  embedDiscussion(configured, { ...annotation, kind: 'pr' }, document, container);
+  expect(container.children).toHaveLength(0);
+});

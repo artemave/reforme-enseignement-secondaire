@@ -11,6 +11,6 @@ export function fixturePlugin(): Plugin {
       await workspace.dispatch({ type: 'rebuild' });
       server.middlewares.use(middleware(workspace, () => { server.ws.send({ type: 'full-reload', path: '*' }); }));
     },
-    transformIndexHtml: () => [{ tag: 'script', attrs: { type: 'module', src: '/dev/client.ts' }, injectTo: 'body' }],
+    transformIndexHtml: () => [{ tag: 'base', attrs: { href: '/' }, injectTo: 'head-prepend' }, { tag: 'script', attrs: { type: 'module', src: '/dev/client.ts' }, injectTo: 'body' }],
   };
 }

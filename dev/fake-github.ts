@@ -54,7 +54,9 @@ export class FakeGitHub {
     }
     if (url.origin !== 'https://api.github.com') return json({ error: 'Unexpected fixture host; no network fallback' }, 404);
     if (url.pathname === '/graphql' && request.method === 'POST') {
-      const { variables } = variablesSchema.parse(await request.json() as unknown);
+      const payload = z.object({ query: z.string(), variables: z.record(z.string(), z.unknown()) }).parse(await request.json() as unknown);
+      if (!payload.query.includes('issueOrPullRequest')) return this.graphql(payload.query, payload.variables);
+      const { variables } = variablesSchema.parse(payload);
       const item = this.item(variables.number);
       const offset = Number(variables.cursor ?? '0');
       const nodes = item.edits.slice(offset, offset + 100);
@@ -99,6 +101,47 @@ export class FakeGitHub {
     }
     return json({ error: 'Unsupported fake GitHub request' }, 404);
   };
+
+  graphql(query: string, variables: Record<string, unknown>): Response {
+    if (query.includes('discussionCategories')) return json({ data: { repository: { id: 'fixture-repository', discussionCategories: { nodes: [{ id: 'fixture-category', name: 'General', slug: 'general' }] } } } });
+    if (query.startsWith('mutation')) {
+      const input = z.record(z.string(), z.unknown()).parse(variables['input']);
+      if (query.includes('addDiscussionComment(')) {
+        const item = this.item(Number(z.string().parse(input['discussionId']).slice(2)));
+        const body = z.string().parse(input['body']);
+        const comment = { id: this.nextCommentId++, body, login: 'github-actions[bot]' };
+        item.comments.push(comment); this.writes.push({ method: 'POST', path: `/discussions/${String(item.number)}/comments`, body });
+        return json({ data: { addDiscussionComment: { comment: { id: `C_${String(comment.id)}` } } } });
+      }
+      const deleting = query.includes('deleteDiscussionComment(');
+      const id = Number(z.string().parse(input[deleting ? 'id' : 'commentId']).slice(2));
+      const item = this.items.find((entry) => entry.comments.some((comment) => comment.id === id));
+      if (item === undefined) return json({ errors: [{ message: 'Unknown discussion comment' }] });
+      if (deleting) {
+        item.comments = item.comments.filter((comment) => comment.id !== id);
+        this.writes.push({ method: 'DELETE', path: `/discussion/comments/${String(id)}`, body: '' });
+        return json({ data: { deleteDiscussionComment: { clientMutationId: null } } });
+      }
+      const body = z.string().parse(input['body']);
+      for (const comment of item.comments.filter((entry) => entry.id === id)) comment.body = body;
+      this.writes.push({ method: 'PATCH', path: `/discussion/comments/${String(id)}`, body });
+      return json({ data: { updateDiscussionComment: { comment: { id: `C_${String(id)}` } } } });
+    }
+    const id = z.string().parse(variables['id']);
+    let values: unknown[];
+    if (query.includes('... on Repository')) values = this.items.filter((item) => item.kind === 'discussion').map((item) => ({ id: `D_${String(item.number)}`, number: item.number, title: item.title, body: item.body, url: item.url, closed: !item.open, includesCreatedEdit: item.includesCreatedEdit, lastEditedAt: item.lastEditedAt }));
+    else if (query.includes('... on DiscussionComment')) values = [];
+    else {
+      const item = this.item(Number(id.slice(2)));
+      if (query.includes('connection:userContentEdits')) values = item.edits;
+      else if (query.includes('connection:labels')) values = item.labels.map((name) => ({ name }));
+      else values = item.comments.map((comment) => ({ id: `C_${String(comment.id)}`, body: comment.body, author: { login: comment.login } }));
+    }
+    const offset = Number(variables['cursor'] ?? '0');
+    const nodes = values.slice(offset, offset + 100);
+    const next = offset + nodes.length;
+    return json({ data: { node: { connection: { nodes, pageInfo: { hasNextPage: next < values.length, endCursor: String(next) } } } } });
+  }
 
   edit(number: number, title: string, body: string): void {
     const item = this.item(number);

@@ -3,19 +3,21 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { actionSchema } from './workspace.js';
 import type { FixtureWorkspace } from './workspace.js';
 import { fixtureRepository } from './scenario.js';
-import { createPage, dashboard, errorPage, itemPage, itemPath } from './pages.js';
+import { createPage, dashboard, errorPage, itemPage, itemPath, threadPage } from './pages.js';
 
 export interface Reply { status: number; body: string; headers: Record<string, string> }
 function html(body: string): Reply { return { status: 200, body, headers: { 'Content-Type': 'text/html; charset=utf-8' } }; }
 export async function route(workspace: FixtureWorkspace, method: string, url: URL, body: unknown, onPublished?: () => void): Promise<Reply | null> {
   if (method === 'GET') {
+    if (url.pathname === '/__dev/giscus/client.js') return { status: 200, body: `(()=>{const script=document.currentScript;const frame=document.createElement('iframe');frame.title='Discussion GitHub';frame.style.cssText='width:100%;height:450px;border:0';const params=new URLSearchParams();if(script.dataset.mapping==='number'){params.set('number',script.dataset.term);}else{const [revision,target]=script.dataset.term.split(':')[0].split('/');params.set('revision',revision);params.set('target',target);}frame.src='/__dev/giscus/thread?'+params;script.parentElement.append(frame);})();`, headers: { 'Content-Type': 'text/javascript' } };
+    if (url.pathname === '/__dev/giscus/thread') return html(threadPage(workspace, url.searchParams));
     if (url.pathname === '/annotations.json') return { status: 200, body: JSON.stringify(workspace.index), headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } };
     if (url.pathname === '/__dev/state') return { status: 200, body: JSON.stringify({ items: workspace.backend.items, writes: workspace.backend.writes, index: workspace.index }), headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } };
     if (url.pathname === '/__dev/') return html(dashboard(workspace));
     const prefix = `/__dev/github/${fixtureRepository}`;
-    if (url.pathname === `${prefix}/issues/new`) return html(createPage('issue', url.searchParams));
+    if (url.pathname === `${prefix}/discussions/new`) return html(createPage('discussion', url.searchParams));
     if (url.pathname === `${prefix}/compare/main`) return html(createPage('pr', url.searchParams));
-    const number = (new RegExp(`^${prefix}/(?:issues|pull)/(\\d+)$`, 'u').exec(url.pathname))?.[1];
+    const number = (new RegExp(`^${prefix}/(?:discussions|pull)/(\\d+)$`, 'u').exec(url.pathname))?.[1];
     if (number !== undefined) return html(itemPage(workspace.backend.item(Number(number))));
     if (url.pathname.startsWith(prefix)) return html(dashboard(workspace));
   }

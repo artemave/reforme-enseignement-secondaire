@@ -32,11 +32,10 @@ function urlExcerpt(text: string): string {
   return excerpt;
 }
 
-export function contributionUrl(index: Pick<AnnotationIndex, 'repository' | 'branch' | 'documentPath' | 'revision'>, unit: Unit, kind: 'issue' | 'pr'): string {
+export function contributionUrl(index: Pick<AnnotationIndex, 'repository' | 'branch' | 'documentPath' | 'revision' | 'giscus'>, unit: Unit): string {
   const base = `https://github.com/${index.repository}`;
   // Keep GitHub URLs bounded even for large tables or code blocks.
   const body = `## Passage\n\n${urlExcerpt(unit.markdown)}\n\n## Contexte\n\n${urlExcerpt(unit.context)}\n\nDocument : ${index.documentPath}\nRévision : ${index.revision}\nCible : ${unit.id}\n\n## Proposition\n\n`;
-  const params = new URLSearchParams({ title: `${kind === 'issue' ? 'Discussion' : 'Proposition'} : ${unit.label.slice(0, 70)}`, body });
-  if (kind === 'pr') params.set('quick_pull', '1');
-  return `${base}/${kind === 'issue' ? 'issues/new' : `compare/${encodeURIComponent(index.branch)}`}?${params.toString()}`;
+  const params = new URLSearchParams({ title: `Discussion : ${unit.label.slice(0, 70)}`, body, category: index.giscus?.categorySlug ?? 'general' });
+  return `${base}/discussions/new?${params.toString()}`;
 }

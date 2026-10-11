@@ -1,5 +1,6 @@
 import { test as base, expect } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { z } from 'zod';
 import { indexSchema } from '../../src/model.js';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -67,18 +68,13 @@ export function github(page: Page) {
   };
   return {
     openRepository: async () => { await page.getByRole('link', { name: /^(?:Simuler|Simulateur) GitHub$/u }).click(); },
-    openIssue: async (number: number) => { await page.goto(`/__dev/github/development/document-annotations/issues/${String(number)}`); },
+    openDiscussion: async (number: number) => { await page.goto(`/__dev/github/development/document-annotations/discussions/${String(number)}`); },
     returnToDocument: async () => {
       await page.getByRole('link', { name: 'Lire le document', exact: true }).click();
       await page.locator('#units .unit').first().waitFor();
     },
-    create: async (kind: 'issue' | 'pr', title: string) => {
-      await page.getByLabel('Titre', { exact: true }).fill(title);
-      await submit(kind === 'issue' ? 'Créer la discussion' : 'Créer la proposition');
-    },
-    closeIssue: async () => { await submit('Fermer'); },
-    reopenIssue: async () => { await submit('Rouvrir'); },
-    merge: async () => { await submit('Fusionner la proposition'); },
+    closeDiscussion: async () => { await submit('Fermer'); },
+    reopenDiscussion: async () => { await submit('Rouvrir'); },
     editDescription: async (body: string) => {
       await page.getByLabel('Description', { exact: true }).fill(body);
       await submit('Enregistrer la description');
@@ -87,21 +83,21 @@ export function github(page: Page) {
       await page.getByLabel('Commentaire', { exact: true }).fill(body);
       await submit('Ajouter le commentaire');
     },
-    updateDiff: async (body: string) => {
-      await page.getByLabel('Diff de la proposition').fill(body);
-      await submit('Enregistrer le diff');
-    },
     document: async () => page.getByLabel('Document Markdown').inputValue(),
     publishDocument: async (markdown: string) => {
       await page.getByLabel('Document Markdown').fill(markdown);
       await submit('Publier ce document fictif');
     },
     followPeer: async (number: number) => {
-      await page.locator('[data-bot-comment]').getByRole('link', { name: new RegExp(`^(?:Issue|PR) #${String(number)}$`, 'u') }).click();
+      await page.locator('[data-bot-comment]').getByRole('link', { name: new RegExp(`^(?:Discussion|Issue|PR) #${String(number)}$`, 'u') }).click();
+    },
+    comments: async (number: number) => {
+      const state = z.object({ items: z.array(z.object({ number: z.number(), comments: z.array(z.object({ body: z.string() })) })) }).parse(await (await page.request.get('/__dev/state')).json() as unknown);
+      return state.items.find((item) => item.number === number)?.comments.map((comment) => comment.body) ?? [];
     },
     item: async () => ({
       number: Number(new URL(page.url()).pathname.split('/').at(-1)),
-      peers: await page.locator('[data-bot-comment]').getByRole('link', { name: /^(?:Issue|PR) #/u }).evaluateAll((links) =>
+      peers: await page.locator('[data-bot-comment]').getByRole('link', { name: /^(?:Discussion|Issue|PR) #/u }).evaluateAll((links) =>
         links.map((link) => Number(new URL((link as HTMLAnchorElement).href).pathname.split('/').at(-1)))),
     }),
   };

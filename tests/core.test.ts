@@ -16,17 +16,14 @@ describe('document targets', () => {
     expect(parseDocument('')).toEqual([]);
   });
   it('encodes contribution URLs with quotation, context and revision', () => {
-    const issue = new URL(contributionUrl(index, unit, 'issue'));
-    expect(issue.pathname).toBe('/a/b/issues/new');
+    const issue = new URL(contributionUrl(index, unit));
+    expect(issue.pathname).toBe('/a/b/discussions/new');
     expect(issue.searchParams.get('body')).toContain('Révision : hash');
     expect(issue.searchParams.get('body')).toContain('# Title');
     expect(issue.searchParams.get('body')).toContain('Context');
-    const pr = new URL(contributionUrl({ ...index, branch: 'feature/a' }, unit, 'pr'));
-    expect(pr.pathname).toBe('/a/b/compare/feature%2Fa');
-    expect(pr.searchParams.get('quick_pull')).toBe('1');
-    expect(contributionUrl(index, { ...unit, markdown: '文'.repeat(10_000), context: 'é'.repeat(10_000) }, 'issue').length).toBeLessThan(8000);
+    expect(contributionUrl(index, { ...unit, markdown: '文'.repeat(10_000), context: 'é'.repeat(10_000) }).length).toBeLessThan(8000);
     const fullPassage = 'A paragraph with surrounding context. '.repeat(15);
-    expect(new URL(contributionUrl(index, { ...unit, markdown: fullPassage }, 'issue')).searchParams.get('body')).toContain(fullPassage);
+    expect(new URL(contributionUrl(index, { ...unit, markdown: fullPassage })).searchParams.get('body')).toContain(fullPassage);
   });
 });
 describe('original descriptions', () => {

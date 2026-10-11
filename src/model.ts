@@ -6,22 +6,24 @@ export const unitSchema = z.object({
 });
 export type Unit = z.infer<typeof unitSchema>;
 export const annotationSchema = z.object({
-  number: z.number().int().positive(), kind: z.enum(['issue', 'pr']),
+  number: z.number().int().positive(), kind: z.enum(['issue', 'pr', 'discussion']),
   title: z.string(), url: z.url().regex(/^https:\/\/github\.com\//u),
   targetId: z.string(),
 });
 export type Annotation = z.infer<typeof annotationSchema>;
+export const giscusSchema = z.object({ repositoryId: z.string(), categoryId: z.string(), category: z.string(), categorySlug: z.string(), clientUrl: z.string().default('https://giscus.app/client.js') });
+export type GiscusConfig = z.infer<typeof giscusSchema>;
 export const indexSchema = z.object({
   version: z.literal(1), repository: z.string().regex(/^[\w.-]+\/[\w.-]+$/u),
   branch: z.string().min(1), documentPath: z.string().min(1),
   revision: z.string(), generatedAt: z.iso.datetime(),
-  units: z.array(unitSchema), annotations: z.array(annotationSchema),
+  giscus: giscusSchema.optional(), units: z.array(unitSchema), annotations: z.array(annotationSchema),
 });
 export type AnnotationIndex = z.infer<typeof indexSchema>;
-export interface Comment { id: number; body: string; login: string }
+export interface Comment { id: number | string; body: string; login: string }
 export interface Edit { diff: string | null; editedAt: string; deletedAt: string | null }
 export interface Item {
-  number: number; kind: 'issue' | 'pr'; title: string; body: string;
+  number: number; kind: 'issue' | 'pr' | 'discussion'; title: string; body: string;
   url: string; open: boolean; labels: string[]; comments: Comment[];
   discussion: string[]; edits: Edit[]; includesCreatedEdit: boolean; lastEditedAt: string | null; diff: string;
 }

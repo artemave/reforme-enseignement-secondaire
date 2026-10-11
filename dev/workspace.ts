@@ -1,18 +1,20 @@
 import { z } from 'zod';
-import { GitHub } from '../src/github.js';
+import { Discussions } from '../src/discussions.js';
 import { matchItem } from '../src/matcher.js';
 import { synchronise } from '../src/synchronise.js';
 import { parseDocument } from '../src/document.js';
 import { revisionOf } from '../src/artifacts.js';
+import { giscusSchema } from '../src/model.js';
 import type { AnnotationIndex } from '../src/model.js';
 import { FakeGitHub } from './fake-github.js';
 import { fixtureRepository, fixtureTime, seedItems } from './scenario.js';
 
 const number = z.coerce.number().int().positive();
 export const actionSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('create'), kind: z.enum(['issue', 'pr']), title: z.string().trim().min(1), body: z.string() }),
+  z.object({ type: z.literal('create'), kind: z.enum(['discussion', 'pr']), title: z.string().trim().min(1), body: z.string() }),
   z.object({ type: z.literal('edit'), number, title: z.string().trim().min(1), body: z.string() }),
   z.object({ type: z.literal('comment'), number, body: z.string().trim().min(1) }),
+  z.object({ type: z.literal('start-discussion'), targetId: z.string(), revision: z.string(), body: z.string().trim().min(1) }),
   z.object({ type: z.literal('state'), number, state: z.enum(['open', 'closed', 'merged']) }),
   z.object({ type: z.literal('diff'), number, body: z.string() }),
   z.object({ type: z.literal('document'), markdown: z.string() }),
@@ -37,7 +39,15 @@ export class FixtureWorkspace {
       switch (action.type) {
         case 'create': {
           const number = Math.max(0, ...this.backend.items.map((item) => item.number)) + 1;
-          this.backend.items.push({ number, kind: action.kind, title: action.title, body: action.body, url: `https://github.com/${fixtureRepository}/${action.kind === 'issue' ? 'issues' : 'pull'}/${String(number)}`, open: true, merged: false, labels: [], comments: [], discussion: [], edits: [], includesCreatedEdit: false, lastEditedAt: null, diff: '' });
+          this.backend.items.push({ number, kind: action.kind, title: action.title, body: action.body, url: `https://github.com/${fixtureRepository}/${action.kind === 'discussion' ? 'discussions' : 'pull'}/${String(number)}`, open: true, merged: false, labels: [], comments: [], discussion: [], edits: [], includesCreatedEdit: false, lastEditedAt: null, diff: '' });
+          break;
+        }
+        case 'start-discussion': {
+          if (action.revision !== this.index.revision) throw new Error('Outdated passage');
+          const unit = this.index.units.find((entry) => entry.id === action.targetId);
+          if (unit === undefined) throw new Error('Unknown passage');
+          const number = Math.max(0, ...this.backend.items.map((item) => item.number)) + 1;
+          this.backend.items.push({ number, kind: 'discussion', title: `Discussion : ${unit.label}`, body: `## Passage\n\n${unit.markdown}\n\n## Contexte\n\n${unit.context}`, url: `https://github.com/${fixtureRepository}/discussions/${String(number)}`, open: true, merged: false, labels: [], comments: [{ id: this.backend.nextCommentId++, login: 'fixture-reader', body: action.body }], discussion: [], edits: [], includesCreatedEdit: false, lastEditedAt: null, diff: '' });
           break;
         }
         case 'edit': this.backend.edit(action.number, action.title, action.body); break;
@@ -55,8 +65,9 @@ export class FixtureWorkspace {
       }
       const units = parseDocument(this.markdown);
       const config = { repository: fixtureRepository, branch: 'main', documentPath: 'content/document.md', revision: revisionOf(this.markdown), siteUrl: this.siteUrl, botLogin: 'github-actions[bot]' };
-      const next = await synchronise(new GitHub(fixtureRepository, 'fake-token', this.backend.fetch), units, config,
+      const next = await synchronise(new Discussions(fixtureRepository, 'fake-token', this.backend.fetch), units, config,
         (item, document) => matchItem(item, document, { token: 'fake-key', endpoint: 'https://fixture-model.invalid/chat', model: 'fixture' }, config.botLogin, this.backend.fetch), fixtureTime);
+      next.giscus = { ...giscusSchema.parse(next.giscus), clientUrl: '/__dev/giscus/client.js' };
       this.index = next; return next;
     });
     // A failed run must preserve the last index and not poison later queued runs.

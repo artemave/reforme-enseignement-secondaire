@@ -36,7 +36,7 @@ describe('synchronisation', () => {
     expect(second.deleteComment).toHaveBeenCalledExactlyOnceWith(2);
     const third = api([{ ...item, comments: [{ id: 1, body: 'old', login: config.botLogin }, { id: 5, body: BOT_MARKER, login: config.botLogin }] }]);
     await synchronise(third, [unit], config, () => Promise.resolve(matched), now);
-    expect(third.writeComment).toHaveBeenCalledWith(1, body, 5);
+    expect(third.writeComment).toHaveBeenCalledWith(1, body, 5, 'issue');
   });
   it('clears closed and unmatched mappings, skips closed items without a bot comment', async () => {
     const github = api([{ ...item, open: false, comments: [{ id: 1, body: BOT_MARKER, login: config.botLogin }] }, { ...item, number: 2, open: false }, { ...item, number: 3 }]);
@@ -44,6 +44,16 @@ describe('synchronisation', () => {
     const result = await synchronise(github, [unit], config, match, now);
     expect(result.annotations).toEqual([]); expect(match).toHaveBeenCalledTimes(1);
     expect(github.writeComment).toHaveBeenCalledTimes(2);
+  });
+  it('distinguishes a Discussion and PR with the same number and uses revision-specific cross-references', async () => {
+    const paragraph = { ...unit, kind: 'paragraph' as const };
+    const github = { ...api([{ ...item, kind: 'discussion' }, { ...item, kind: 'pr' }]), giscus: { repositoryId: 'repo', categoryId: 'cat', category: 'General', categorySlug: 'general', clientUrl: 'https://giscus.app/client.js' } };
+    const result = await synchronise(github, [paragraph], config, () => Promise.resolve(matched), now);
+    expect(result.annotations.map((entry) => entry.kind)).toEqual(['discussion', 'pr']);
+    expect(github.writeComment.mock.calls[0]?.[1]).toContain('PR #1');
+    expect(github.writeComment.mock.calls[1]?.[1]).toContain('Discussion #1');
+    expect(github.writeComment.mock.calls[0]?.[1]).toContain('/passage/hash/u-1/');
+    expect(result.giscus?.repositoryId).toBe('repo');
   });
   it('does not mutate if any mapping fails', async () => {
     const github = api([item, { ...item, number: 2 }]);

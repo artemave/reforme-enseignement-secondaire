@@ -22,11 +22,12 @@ describe('development-only pages and routes', () => {
     expect(itemPage(item)).toContain('Fermer');
     expect(itemPage({ ...item, open: false })).toContain('Rouvrir');
     expect(itemPage({ ...item, kind: 'pr', open: false, merged: true })).toContain('Fusionnée');
-    expect(itemPage(workspace.backend.item(4))).toContain('Fusionner la proposition');
+    expect(itemPage({ ...workspace.backend.item(4), kind: 'pr' })).toContain('Fusionner la proposition');
     item.comments = [{ id: 1, body: '<b>reader</b>', login: 'reader' }, { id: 2, body: 'bot', login: 'github-actions[bot]' }];
     expect(itemPage(item)).toContain('data-reader-comment'); expect(itemPage(item)).toContain('data-bot-comment');
+    workspace.backend.item(8).kind = 'pr'; workspace.backend.item(8).merged = true;
     expect(dashboard(workspace)).toContain('Fusionnée');
-    expect(createPage('issue', new URLSearchParams())).toContain('Créer la discussion');
+    expect(createPage('discussion', new URLSearchParams())).toContain('Créer la discussion');
     expect(createPage('pr', new URLSearchParams({ title: 'Title', body: 'Quote' }))).toContain('Créer la proposition');
     expect(errorPage('<error>')).toContain('&#60;error&#62;');
   });
@@ -34,19 +35,38 @@ describe('development-only pages and routes', () => {
     const workspace = new FixtureWorkspace(markdown); await workspace.dispatch({ type: 'rebuild' });
     const onPublished = vi.fn();
     const prefix = `/__dev/github/${fixtureRepository}`;
-    for (const path of ['/annotations.json', '/__dev/state', '/__dev/', `${prefix}/issues/new`, `${prefix}/compare/main`, `${prefix}/issues/3`, `${prefix}/pull/4`, `${prefix}/blob/main/content/document.md`, prefix]) {
+    const emptyThread = await route(workspace, 'GET', url('/__dev/giscus/thread'), {});
+    expect(emptyThread?.body).toContain('start-discussion');
+    expect((await route(workspace, 'GET', url('/__dev/giscus/thread?target=u-8&revision=current'), {}))?.body).toContain('value="u-8"');
+    workspace.backend.item(3).comments.push({ id: 987, login: 'reader', body: '<comment>' });
+    const existingThread = await route(workspace, 'GET', url('/__dev/giscus/thread?number=3'), {});
+    expect(existingThread?.body).toContain('&#60;comment&#62;');
+    expect(existingThread?.body).not.toContain('github-actions[bot]');
+    for (const path of ['/__dev/giscus/client.js', '/annotations.json', '/__dev/state', '/__dev/', `${prefix}/discussions/new`, `${prefix}/compare/main`, `${prefix}/discussions/3`, `${prefix}/pull/4`, `${prefix}/blob/main/content/document.md`, prefix]) {
       expect((await route(workspace, 'GET', url(path), {}))?.status).toBe(200);
     }
     expect(await route(workspace, 'GET', url('/other'), {})).toBeNull();
     expect(await route(workspace, 'PUT', url('/__dev/action'), {})).toBeNull();
-    const created = await route(workspace, 'POST', url('/__dev/action'), { type: 'create', kind: 'issue', title: 'Created', body: 'body' }, onPublished);
+    const created = await route(workspace, 'POST', url('/__dev/action'), { type: 'create', kind: 'discussion', title: 'Created', body: 'body' }, onPublished);
     expect(onPublished).toHaveBeenCalledOnce();
     await expect(route(workspace, 'POST', url('/__dev/action'), { type: 'matching', available: 'no' }, onPublished)).rejects.toThrow('503');
     expect(onPublished).toHaveBeenCalledOnce();
     await workspace.dispatch({ type: 'matching', available: 'yes' });
-    expect(created?.headers['Location']).toContain('/issues/9');
-    expect((await route(workspace, 'POST', url('/__dev/action'), { type: 'edit', number: 9, title: 'Edited', body: 'body' }))?.headers['Location']).toContain('/issues/9');
+    expect(created?.headers['Location']).toContain('/discussions/9');
+    expect((await route(workspace, 'POST', url('/__dev/action'), { type: 'edit', number: 9, title: 'Edited', body: 'body' }))?.headers['Location']).toContain('/discussions/9');
     expect((await route(workspace, 'POST', url('/__dev/action'), { type: 'rebuild' }))?.headers['Location']).toBe('/__dev/');
+  });
+  it('creates a passage discussion with the first local widget comment and rejects stale or unknown targets', async () => {
+    const workspace = new FixtureWorkspace(markdown); await workspace.dispatch({ type: 'rebuild' });
+    const revision = workspace.index.revision;
+    await expect(workspace.dispatch({ type: 'start-discussion', targetId: 'u-8', revision: 'old', body: 'Comment' })).rejects.toThrow('Outdated passage');
+    await expect(workspace.dispatch({ type: 'start-discussion', targetId: 'missing', revision, body: 'Comment' })).rejects.toThrow('Unknown passage');
+    await workspace.dispatch({ type: 'start-discussion', targetId: 'u-8', revision, body: 'A first comment' });
+    expect(workspace.backend.item(9).comments).toEqual(expect.arrayContaining([expect.objectContaining({ login: 'fixture-reader', body: 'A first comment' })]));
+    expect(workspace.index.annotations).toEqual(expect.arrayContaining([expect.objectContaining({ number: 9, targetId: 'u-8' })]));
+    workspace.backend.items.length = 0;
+    await workspace.dispatch({ type: 'start-discussion', targetId: 'u-8', revision, body: 'Comment' });
+    expect(workspace.backend.item(1).kind).toBe('discussion');
   });
   it('handles real HTTP form/JSON requests, pass-through, invalid JSON/actions and matching failures', async () => {
     const workspace = new FixtureWorkspace(markdown);

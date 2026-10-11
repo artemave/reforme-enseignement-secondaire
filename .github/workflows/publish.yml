@@ -1,15 +1,9 @@
 name: Synchronise and publish
 on:
   push:
-  issues:
-    types: [opened, edited, deleted, closed, reopened, labeled, unlabeled, assigned, unassigned, transferred, milestoned, demilestoned, locked, unlocked]
-  issue_comment:
+  discussion:
+  discussion_comment:
     types: [created, edited, deleted]
-  pull_request_target:
-    types: [opened, edited, synchronize, closed, reopened, ready_for_review, converted_to_draft, labeled, unlabeled, assigned, unassigned, review_requested, review_request_removed, locked, unlocked]
-  workflow_run:
-    workflows: ['Review activity']
-    types: [completed]
   milestone:
   label:
   release:
@@ -29,15 +23,14 @@ permissions:
 jobs:
   publish:
     if: >-
-      !(github.event_name == 'issue_comment' && github.event.comment.user.login == 'github-actions[bot]' && startsWith(github.event.comment.body, '<!-- document-annotations:v1 -->')) &&
+      !((github.event_name == 'discussion_comment') && github.event.comment.user.login == 'github-actions[bot]' && startsWith(github.event.comment.body, '<!-- document-annotations:v1 -->')) &&
       (github.event_name != 'push' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) &&
       (github.event_name != 'page_build' || github.event.build.pusher.login != 'github-actions[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
       contents: read
-      issues: write
-      pull-requests: write
+      discussions: write
       pages: write
       id-token: write
     environment:
@@ -49,8 +42,7 @@ jobs:
       AI_ENDPOINT: ${{ vars.AI_ENDPOINT || 'https://api.openai.com/v1/chat/completions' }}
       SITE_URL: ${{ vars.SITE_URL }}
     steps:
-      # Never execute a PR head/ref on privileged events. This also gives reviews,
-      # scheduled jobs and queued events the CURRENT published document.
+      # Always publish the current default-branch document and trusted site code.
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}

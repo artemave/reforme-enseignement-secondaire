@@ -14,7 +14,7 @@ const request = (method: string, body: unknown) => ({ method, body: JSON.stringi
 const payload = (document: readonly { id: string; markdown: string }[], description: string, original: string | null, diff: string, comments: string[]) => request('POST', { messages: [{ role: 'user', content: JSON.stringify({ currentDocument: document, item: { description, originalDescription: original, diff, comments, reviews: [] } }) }] });
 
 describe('shared fake GitHub contract', () => {
-  it('seeds title, section, paragraph, historical, unmatched, closed and accepted examples', () => {
+  it('seeds title, section, paragraph, historical, unmatched, closed examples', () => {
     expect(seedItems(markdown)).toHaveLength(8);
     expect(seedItems('').every((item) => item.diff === '')).toBe(true);
     expect(seedItems('Only a paragraph.')).toHaveLength(8);
@@ -22,7 +22,7 @@ describe('shared fake GitHub contract', () => {
     expect(() => fake().item(999)).toThrow('does not exist');
   });
   it('supports every real GitHub adapter operation and records writes', async () => {
-    const backend = fake(); const github = new GitHub(fixtureRepository, 'fake', backend.fetch);
+    const backend = fake(); backend.item(4).kind = 'pr'; backend.item(4).diff = 'L’école'; backend.item(4).discussion = ['A review']; const github = new GitHub(fixtureRepository, 'fake', backend.fetch);
     const items = await github.state();
     expect(items[3]?.diff).toContain('L’école'); expect(items[3]?.discussion).toHaveLength(2);
     await github.writeComment(1, 'created'); await github.writeComment(1, 'edited', 1000);
@@ -81,7 +81,7 @@ describe('simulated event → synchronisation → publication', () => {
     const workspace = new FixtureWorkspace(markdown);
     const index = await workspace.dispatch({ type: 'rebuild' });
     expect(index.annotations.map((a) => a.number)).toEqual([1, 2, 3, 4, 5]);
-    expect(workspace.backend.item(3).comments.find((c) => c.body.startsWith(BOT_MARKER))?.body).toContain('PR #4');
+    expect(workspace.backend.item(3).comments.find((c) => c.body.startsWith(BOT_MARKER))?.body).toContain('Discussion #4');
     const writes = workspace.backend.writes.length;
     await workspace.dispatch({ type: 'rebuild' }); expect(workspace.backend.writes).toHaveLength(writes);
   });
@@ -90,11 +90,11 @@ describe('simulated event → synchronisation → publication', () => {
     await workspace.dispatch({ type: 'rebuild' });
     const first = parseDocument(markdown)[0];
     if (first === undefined) throw new Error('Expected title');
-    await workspace.dispatch({ type: 'create', kind: 'issue', title: 'New issue', body: passageBody(first) });
+    await workspace.dispatch({ type: 'create', kind: 'discussion', title: 'New issue', body: passageBody(first) });
     await workspace.dispatch({ type: 'create', kind: 'pr', title: 'New proposal', body: 'No quote' });
     expect(workspace.index.annotations.some((a) => a.number === 9)).toBe(true);
     await workspace.dispatch({ type: 'diff', number: 10, body: first.markdown });
-    expect(workspace.index.annotations.some((a) => a.number === 10)).toBe(true);
+    expect(workspace.index.annotations.some((a) => a.number === 10)).toBe(false);
     await workspace.dispatch({ type: 'comment', number: 6, body: first.markdown });
     await workspace.dispatch({ type: 'edit', number: 9, title: 'Edited', body: first.markdown });
     await workspace.dispatch({ type: 'state', number: 9, state: 'closed' });
@@ -112,8 +112,8 @@ describe('simulated event → synchronisation → publication', () => {
     expect(workspace.index).toBe(first); expect(workspace.backend.writes).toHaveLength(writes);
     await workspace.dispatch({ type: 'matching', available: 'yes' });
     await Promise.all([
-      workspace.dispatch({ type: 'create', kind: 'issue', title: 'Queued one', body: 'No match' }),
-      workspace.dispatch({ type: 'create', kind: 'issue', title: 'Queued two', body: 'No match' }),
+      workspace.dispatch({ type: 'create', kind: 'discussion', title: 'Queued one', body: 'No match' }),
+      workspace.dispatch({ type: 'create', kind: 'discussion', title: 'Queued two', body: 'No match' }),
     ]);
     expect(workspace.backend.items.slice(-2).map((item) => item.number)).toEqual([9, 10]);
     await workspace.dispatch({ type: 'document', markdown: '# Different\n\nA different document.' });
@@ -122,11 +122,11 @@ describe('simulated event → synchronisation → publication', () => {
   });
   it('can create the first item in an empty fake repository', async () => {
     const workspace = new FixtureWorkspace(markdown); workspace.backend.items.splice(0);
-    await workspace.dispatch({ type: 'create', kind: 'issue', title: 'First', body: 'No match' });
+    await workspace.dispatch({ type: 'create', kind: 'discussion', title: 'First', body: 'No match' });
     expect(workspace.backend.items[0]?.number).toBe(1);
   });
   it('validates submitted actions', () => {
     expect(actionSchema.parse({ type: 'state', number: '3', state: 'closed' })).toEqual({ type: 'state', number: 3, state: 'closed' });
-    expect(() => actionSchema.parse({ type: 'create', kind: 'issue', title: '', body: '' })).toThrow();
+    expect(() => actionSchema.parse({ type: 'create', kind: 'discussion', title: '', body: '' })).toThrow();
   });
 });

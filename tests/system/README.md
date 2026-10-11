@@ -12,7 +12,7 @@ The suite uses the **same** development scenario, fake GitHub backend, determini
 
 - [reading-annotations.spec.ts](reading-annotations.spec.ts): follow exact-passage GitHub cross-references.
 - [discussion-lifecycle.spec.ts](discussion-lifecycle.spec.ts): create, edit, close, reopen and add context to discussions.
-- [proposal-lifecycle.spec.ts](proposal-lifecycle.spec.ts): create, update and accept proposals while preserving independent discussions.
+- [passage-links.spec.ts](passage-links.spec.ts): shared-page commenting and expired revision links.
 - [document-revisions.spec.ts](document-revisions.spec.ts): republish document changes and recompute targets against current text.
 
 `document-reader.ts` and `environment.ts` keep browser mechanics out of the scenarios. Each scenario starts with fresh repository state and runs independently of file order.
@@ -21,15 +21,12 @@ The suite uses the **same** development scenario, fake GitHub backend, determini
 
 | Given | When | Then |
 | --- | --- | --- |
-| A discussion and proposal share a passage | Follow the discussion's proposal cross-reference | The proposal references that discussion |
+| Two discussions share a passage | Follow the other discussion’s cross-reference | The other discussion references it |
 | A passage has no related items | Open a discussion from the passage | The open document gains its annotation |
-| A passage has a discussion and proposal | Close the discussion | Only the proposal remains annotated |
+| A passage has two discussions | Close the discussion | Only the other discussion remains annotated |
 | A passage has a closed discussion | Reopen the discussion | Its annotation returns |
 | A discussion quotes one passage | Edit it to quote another passage | Its annotation moves |
 | A passage has two related items | Quote it in an unrelated discussion | That discussion joins the annotations |
-| A passage has existing related items | Open another proposal from the passage | All items coexist in the open document |
-| A proposal shares a passage with a discussion | Merge the proposal | The discussion remains annotated |
-| A proposal affects one passage | Update its diff to another passage | Its annotation moves |
 | A passage has existing annotations | Insert preceding document text and publish | The annotations remain on the passage |
 | A passage has existing annotations | Remove the passage and publish | Its annotations disappear |
 

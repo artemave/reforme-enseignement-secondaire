@@ -12,7 +12,7 @@ test('Inserting document text preserves annotations on existing passages', async
     await github(page).publishDocument(original.replace('\n\n', '\n\nUne introduction ajoutée.\n\n'));
     await github(page).returnToDocument();
   });
-  await test.step('Then the passage keeps its existing discussions and proposals', async () => {
+  await test.step('Then the passage keeps its existing discussions', async () => {
     expect(await reader(page).items('learning')).toEqual([3, 4]);
   });
 });

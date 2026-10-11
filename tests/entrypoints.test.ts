@@ -12,7 +12,8 @@ vi.mock('node:fs/promises', () => {
 });
 vi.mock('vite', () => ({ build: vi.fn() }));
 vi.mock('../src/artifacts.js', () => ({ prepare: vi.fn(), writeIndex: vi.fn(), revisionOf: vi.fn().mockReturnValue('hash') }));
-vi.mock('../src/github.js', () => ({ GitHub: vi.fn() }));
+vi.mock('../src/discussions.js', () => ({ Discussions: vi.fn() }));
+vi.mock('../src/passage-pages.js', () => ({ writePassagePages: vi.fn() }));
 vi.mock('../src/matcher.js', () => ({ matchItem: vi.fn() }));
 vi.mock('../src/synchronise.js', () => ({ synchronise: vi.fn().mockImplementation(async (_github: unknown, _units: unknown, _config: unknown, match: (item: unknown, units: unknown) => Promise<unknown>) => { await match({}, []); return index; }) }));
 vi.mock('../src/ui.js', () => ({ load: vi.fn() }));

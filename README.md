@@ -1,8 +1,8 @@
 # GitHub-backed document annotations — Phase 1
 
-A static French-language Markdown reader for `reforme-enseignement-secondaire`. GitHub holds the document, issues, pull requests and discussions. GitHub Actions builds a derived annotation index and deploys the reader to GitHub Pages. There is no database, application server or website sign-in.
+A static French-language Markdown reader for `reforme-enseignement-secondaire`. GitHub holds the document and Discussions. GitHub Actions builds a derived annotation index and deploys the reader to GitHub Pages. There is no database, application server or website sign-in.
 
-The included `content/document.md` is **starter content**, not an adopted reform proposal. Replace it with the document you want to publish.
+The published document is `content/document.md`. Development and tests use the separate stable document in `dev/fixtures/document.md`.
 
 ## Run locally
 
@@ -14,19 +14,19 @@ npm run check
 bun run dev
 ```
 
-Open the URL printed by Vite. Development starts with fixture discussions, proposals and the local GitHub backend. Use `bun run dev:plain` to read without fixtures; without synchronisation, that reader has an empty annotation index. `npm run build` creates `dist/`, which can be served from any static host, including a repository subpath. After changing the document in plain mode, remove the derived `public/annotations.json` before restarting, or run a real synchronisation. Production refuses an index from a different document or configuration.
+Open the URL printed by Vite. Development starts with fixture discussions and the local GitHub backend. Use `bun run dev:plain` to read without fixtures; without synchronisation, that reader has an empty annotation index. `npm run build` creates `dist/`, which can be served from any static host, including a repository subpath. After changing the document in plain mode, remove the derived `public/annotations.json` before restarting, or run a real synchronisation. Production refuses an index from a different document or configuration.
 
-## Develop with discussions and proposals
+## Develop with discussions
 
 ```sh
 bun run dev
 ```
 
-`bun run dev:fixtures` remains an alias for the same mode. Open the printed Vite URL. The blue development banner identifies the fictional data and links to **Simuler GitHub**. Examples include annotations on a title, a section and paragraphs; a discussion and a proposal on the same passage; an issue matched through its original description; an unmatched issue; and closed/accepted items excluded from the reader.
+`bun run dev:fixtures` remains an alias for the same mode. Open the printed Vite URL. The blue development banner identifies the fictional data and links to **Simuler GitHub**. Examples include annotations on a title, a section and paragraphs; two discussions on the same passage; a discussion matched through its original description; an unmatched discussion; and closed discussions excluded from the reader.
 
-GitHub links in this mode go to local simulation pages, including opening links in a new tab. Descriptions and bot comments expose clickable links to related discussions/proposals and back to the exact document passage. Create a discussion or proposal using the prefilled form, edit descriptions, add comments, change a PR diff, close/reopen items or accept a proposal. Every successful publication automatically refreshes open document tabs with the new annotations; no manual rebuild or browser refresh is needed. The simulator also lets you change the document in memory, trigger an unchanged rebuild, reset the examples, and simulate/recover from a matching outage. Return to **Lire le document** when navigating in one tab. State lasts until reset or server restart; no repository files or real GitHub items are changed.
+GitHub links in this mode go to local simulation pages, including opening links in a new tab. Descriptions and bot comments expose clickable links to related discussions and back to the exact document passage. Leave a first comment to create a discussion, edit descriptions, add comments or close/reopen discussions. Every successful publication automatically refreshes open document tabs with the new annotations; no manual rebuild or browser refresh is needed. The simulator also lets you change the document in memory, trigger an unchanged rebuild, reset the examples, and simulate/recover from a matching outage. Return to **Lire le document** when navigating in one tab. State lasts until reset or server restart; no repository files or real GitHub items are changed.
 
-The fake serves GitHub REST/GraphQL responses to the **real** adapter and supplies a deterministic, exact-quotation model double to the **real** matcher and synchronisation code. It needs no credentials and has no network fallback. This exercises workflow behavior, including original descriptions, PR diffs, exact-target cross-references and idempotent comments, without pretending to test real AI judgment.
+The fake serves GitHub REST/GraphQL responses to the **real** adapter and supplies a deterministic, exact-quotation model double to the **real** matcher and synchronisation code. It needs no credentials and has no network fallback. This exercises workflow behavior, including original descriptions, exact-target cross-references and idempotent comments, without pretending to test real AI judgment.
 
 Fixture mode serves its index from memory; it never overwrites `public/annotations.json`. The simulator and its navigation hook are enabled only by the explicit development mode. Production builds, including `vite build --mode fixtures`, do not install that plugin or publish its server endpoints.
 
@@ -56,7 +56,7 @@ The separate [UI smoke suite](tests/browser-ui/README.md) runs once on desktop a
 4. If publishing under a custom domain, set the repository variable `SITE_URL` to the full public site URL, with its trailing slash. This is used in bot comments.
 5. Run **Actions → Synchronise and publish → Run workflow**. `GITHUB_TOKEN` is supplied by Actions with scoped permissions; no personal GitHub token is needed for deployment.
 
-The default Pages URL is `https://artemave.github.io/reforme-enseignement-secondaire/`. It becomes available after a successful deployment. Repository or organisation policies must allow Actions to write issue/PR comments and deploy Pages. If the `github-pages` environment restricts branches, allow the default branch and privileged event runs that use that branch.
+The default Pages URL is `https://artemave.github.io/reforme-enseignement-secondaire/`. It becomes available after a successful deployment. Repository or organisation policies must allow Actions to write Discussion comments and deploy Pages. If the `github-pages` environment restricts branches, allow the default branch and privileged event runs that use that branch.
 
 Local synchronisation also works with `GITHUB_REPOSITORY`, `GITHUB_TOKEN`, and `AI_API_KEY` supplied through the environment:
 
@@ -69,15 +69,15 @@ Do not put secrets in tracked files. Other environment options: `DOCUMENT_PATH` 
 
 ## Reader behaviour
 
-Each title, heading, and top-level Markdown block has a target and an accessible annotation control. Lists, tables, blockquotes and fenced code blocks are kept intact as block targets. A number indicates the open issues/PRs mapped to that target. Clicking opens a native modal with GitHub links; `+` opens the same controls for an unannotated passage. Escape, the close button, and clicking the backdrop close the modal.
+Each title, heading, and top-level Markdown block has a target and an accessible annotation control. Lists, tables, blockquotes and fenced code blocks are kept intact as block targets. A number indicates the open Discussions mapped to that target. Both numbered bubbles and `+` links navigate directly to the passage’s discussion page. The document title links to its discussion area on the root page. Empty passages show the giscus comment form; posting the first comment creates the Discussion.
 
-Every target offers a new issue link and a PR compare link with the passage, context, current document digest and target ID prefilled. GitHub handles sign-in and submission. A PR still requires a branch containing changes, selected on GitHub. Long passages/context are excerpted to keep URLs within GitHub's limits; the modal explains this.
+Every target embeds its existing GitHub Discussion, or shows a comment form that creates one on the first comment in the General category. New thread titles contain the document revision, target ID and a passage excerpt, providing context for matching.
 
-The frontend fetches only the static `annotations.json`. Markdown HTML is sanitised, and GitHub item titles are inserted as text. The reader has keyboard focus styles, a skip link, responsive layouts and reduced-motion support. Full discussion rendering and direct editing are deliberately reserved for later phases.
+The frontend fetches the static `annotations.json` and embeds existing Discussions through giscus. Markdown HTML is sanitised, and GitHub item titles are inserted as text. The reader has keyboard focus styles, a skip link, responsive layouts and reduced-motion support. Direct document editing remains reserved for later phases.
 
 ## Matching and derived index
 
-For every open item, synchronisation submits the full current document's units and context, the current description, available original description, description history, labels, ordinary issue comments, PR review discussion and file patches to the AI matcher. All REST and GraphQL connections are paginated. The annotation bot’s marked comments are excluded from matching to avoid feeding its own output back into the model; unrelated automated comments remain available.
+For every open item, synchronisation submits the full current document's units and context, the current description, available original description, description history, labels, Discussion comments and nested replies to the AI matcher. All REST and GraphQL connections are paginated. The annotation bot’s marked comments are excluded from matching to avoid feeding its own output back into the model; unrelated automated comments remain available.
 
 GitHub's `UserContentEdit.diff` field contains historical body versions. The original is selected from the oldest version only when `includesCreatedEdit` confirms creation data exists. An unedited item's current description is its original. Removed/missing creation history is represented as unavailable, never fabricated; available other historical versions still supply additional context. See the [GitHub history fields](https://docs.github.com/en/graphql/reference/issues#issue) and [GitHub API history examples](https://github.com/orgs/community/discussions/33551).
 
@@ -89,15 +89,15 @@ No mapping database, committed mapping file, or previous index is used during sy
 
 ## Bot comments and synchronisation
 
-Each open issue/PR has one bot comment marked `<!-- document-annotations:v1 -->`. It links to its current target and other **open** items mapped to the **exact same** target. It explicitly does not claim that a PR resolves an issue. Unmatched items receive a no-confident-match comment. On closure, an existing bot comment is cleared of its active mapping and cross-references; closed items without a bot comment receive none. Duplicate bot-owned annotation comments are removed. Human comments containing the marker are never treated as bot comments.
+Each open Discussion has one bot comment marked `<!-- document-annotations:v1 -->`. It links to its current target and other **open** Discussions mapped to the **exact same** target. Sharing a passage does not imply approval or resolution. Unmatched items receive a no-confident-match comment. On closure, an existing bot comment is cleared of its active mapping and cross-references; closed items without a bot comment receive none. Duplicate bot-owned annotation comments are removed. Human comments containing the marker are never treated as bot comments.
 
 All AI mappings are computed before any comments are written. An AI refusal, invalid response or GitHub error fails the run and leaves the last published site intact. Once mappings succeed, comment bodies are compared before creating/updating; unchanged comments are left alone. A subsequent run reconciles partial comment-write failures.
 
-Publication responds to default-branch pushes (including site/config/workflow changes), issue lifecycle and metadata events, PR creation/update/merge/closure, issue comments, reviews and inline review comments, labels/milestones, releases, external `repository_dispatch`, external Pages builds, and manual rebuilds. A six-hour scheduled rebuild reconciles missed events, API-only history changes, and other metadata changes without their own Actions event.
+Publication responds to default-branch pushes (including site/config/workflow changes), Discussion lifecycle and metadata events, Discussion comments, labels/milestones, releases, external `repository_dispatch`, external Pages builds, and manual rebuilds. A six-hour scheduled rebuild reconciles missed events, API-only history changes, and other metadata changes without their own Actions event.
 
-Fork review events use the unprivileged **Review activity** workflow, followed by `workflow_run` on the trusted publisher. The publisher always checks out the current default branch and fetches current state. It never executes PR code or downloads PR-produced artifacts. The ordinary quality workflow tests PR code without secrets or write permissions. See [GitHub's event security model](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target).
+The publisher always checks out the current default branch and fetches current state. It never executes PR code or downloads PR-produced artifacts. The ordinary quality workflow tests PR code without secrets or write permissions.
 
-A single `document-pages` concurrency group serialises complete synchronisation/deployment runs with `cancel-in-progress: false`. GitHub can replace pending runs; this is safe because each run recomputes current state rather than applying event deltas. The bot's own marked issue comments and its Pages build notifications are ignored to prevent loops. Other bot-originated changes can still trigger publication. No issue is closed and no PR is merged by this system.
+A single `document-pages` concurrency group serialises complete synchronisation/deployment runs with `cancel-in-progress: false`. GitHub can replace pending runs; this is safe because each run recomputes current state rather than applying event deltas. The bot's own marked Discussion comments and its Pages build notifications are ignored to prevent loops. Other bot-originated changes can still trigger publication. No Discussion is closed by this system.
 
 ## Quality gates
 
@@ -119,13 +119,23 @@ Both CI and publication install Chrome and execute `npm run check`, including al
 | `src/matcher.ts` | Structured AI decisions and conservative validation |
 | `src/synchronise.ts` | Exact-target annotations and idempotent bot comments |
 | `src/artifacts.ts` | Derived index and stale-snapshot protection |
-| `src/ui.ts`, `src/style.css` | Static reader and annotation modal |
+| `src/ui.ts`, `src/style.css` | Static reader and discussion pages |
 | `scripts/` | Local and Actions build/synchronisation entrypoints |
 | `dev/` | Shared development scenario, fake backend and local simulator |
 | `tests/system/` | Given/When/Then system scenarios |
 | `tests/browser-ui/` | Desktop/mobile reader UI smoke checks |
-| `.github/workflows/` | Quality, review activity, serialised publication |
+| `.github/workflows/` | Quality and serialised publication |
 
-Phase 1 is intended for modest document repositories. Matching sends the complete current document per open item; provider context windows, quotas and costs therefore bound scale. GitHub's PR-files API exposes at most 3,000 files and may omit binary/large patches; unavailable patches are explicitly identified. Reader changes on GitHub appear after the next successful build, rather than live.
+This implementation is intended for modest document repositories. Matching sends the complete current document per open item; provider context windows, quotas and costs therefore bound scale. Reader changes on GitHub appear after the next successful build, rather than live.
 
 Fixture-mode development (`bun run dev`) and tests use the stable example in `dev/fixtures/document.md`. The published site and `bun run dev:plain` use the real, evolving document in `content/document.md`. Edit the fixture only when changing a test scenario; normal editorial changes do not affect the test suite.
+
+## Shareable passage pages and giscus
+
+The document remains at `/`. Each section and paragraph has a page at `/passage/<document-sha256>/<sequential-unit-id>/`, linked directly from its annotation bubble. These pages quote the selected passage once and show its matched Discussions. The title represents the whole document and links to `/`.
+
+Only the current revision is published. Incomplete or unknown links return to the document. Links to another revision return to the document with a notice explaining that the passage link is outdated. Static HTML pages and a custom `404.html` implement this on GitHub Pages without a routing server. Assets and annotation JSON always resolve from the repository root, including direct visits to deep URLs.
+
+Giscus embeds the selected existing Discussion by number. Readers can switch between multiple Discussions on the same passage, read replies and comment through GitHub OAuth. Empty passages use strict term matching with the document revision, target ID and a passage excerpt; giscus creates a Discussion on the first comment. Enable repository Discussions, keep a General category, and install [the giscus app](https://github.com/apps/giscus) on the repository. Synchronisation discovers the public repository/category IDs; no giscus secret is needed. The frontend never receives the Actions or AI tokens.
+
+Fixture mode replaces the giscus client script and embedded comment form with local endpoints. Both existing-thread comments and first-comment discussion creation use the shared local GitHub backend and publication pipeline; no real giscus script, iframe, OAuth or GitHub request is loaded. System tests cover shared-page commenting and expired URLs using the same backend, with external network requests blocked.

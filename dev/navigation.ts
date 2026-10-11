@@ -4,7 +4,7 @@ import { fixtureHref } from './links.js';
 export function installFixtureNavigation(root: Document, repository: string): void {
   const notice = root.createElement('div');
   notice.id = 'fixture-mode'; notice.style.cssText = 'padding:10px 20px;background:#e3eff7;color:#243c48;font:14px/1.6 system-ui,sans-serif;text-align:center';
-  notice.textContent = 'Mode développement : données fictives (discussions et propositions). ';
+  notice.textContent = 'Mode développement : données fictives (discussions). ';
   const simulator = root.createElement('a'); simulator.href = '/__dev/'; simulator.textContent = 'Simuler GitHub';
   notice.append(simulator); root.body.prepend(notice);
   const rewrite = (): void => {

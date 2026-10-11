@@ -63,10 +63,10 @@ export class GitHub {
     }
     return result;
   }
-  async writeComment(number: number, body: string, id?: number): Promise<void> {
+  async writeComment(number: number, body: string, id?: number | string): Promise<void> {
     await request(this.fetcher, id === undefined ? `${this.base}/issues/${String(number)}/comments` : `${this.base}/issues/comments/${String(id)}`, this.token, id === undefined ? 'POST' : 'PATCH', { body });
   }
-  async deleteComment(id: number): Promise<void> {
+  async deleteComment(id: number | string): Promise<void> {
     await request(this.fetcher, `${this.base}/issues/comments/${String(id)}`, this.token, 'DELETE');
   }
 }

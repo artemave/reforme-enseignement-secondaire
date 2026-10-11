@@ -7,7 +7,7 @@ import { middleware } from '../dev/server.js';
 import { FixtureWorkspace } from '../dev/workspace.js';
 import type { Action } from '../dev/workspace.js';
 import { contributionUrl } from '../src/document.js';
-import { GitHub } from '../src/github.js';
+import { Discussions } from '../src/discussions.js';
 import { BOT_MARKER } from '../src/matcher.js';
 import { indexSchema, unitSchema } from '../src/model.js';
 
@@ -32,21 +32,21 @@ it('opening and closing a passage-linked issue publishes and removes its annotat
     expect(response.status).toBe(303);
     return response;
   };
-  const github = new GitHub(workspace.index.repository, 'test-token', workspace.backend.fetch);
+  const github = new Discussions(workspace.index.repository, 'test-token', workspace.backend.fetch);
   try {
     const before = await published();
     const passage = unitSchema.parse(before.units.find((unit) =>
       unit.kind === 'paragraph' && !before.annotations.some((item) => item.targetId === unit.id)));
-    const form = new URL(contributionUrl(before, passage, 'issue'));
+    const form = new URL(contributionUrl(before, passage));
     const title = z.string().parse(form.searchParams.get('title'));
     const body = z.string().parse(form.searchParams.get('body'));
-    const created = await action({ type: 'create', kind: 'issue', title, body });
+    const created = await action({ type: 'create', kind: 'discussion', title, body });
     const number = z.coerce.number().int().positive().parse(z.string().parse(created.headers.get('location')).split('/').at(-1));
 
     const opened = await published();
     expect(opened.annotations).toEqual([...before.annotations, {
-      number, kind: 'issue', title, targetId: passage.id,
-      url: `https://github.com/${before.repository}/issues/${String(number)}`,
+      number, kind: 'discussion', title, targetId: passage.id,
+      url: `https://github.com/${before.repository}/discussions/${String(number)}`,
     }]);
     const issue = (await github.state()).find((item) => item.number === number);
     expect(issue?.open).toBe(true);
