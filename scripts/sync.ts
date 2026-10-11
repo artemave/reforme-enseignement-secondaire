@@ -1,0 +1,14 @@
+import { readFile } from 'node:fs/promises';
+import { parseDocument } from '../src/document.js';
+import { revisionOf, writeIndex } from '../src/artifacts.js';
+import { configFromEnv, aiFromEnv } from '../src/config.js';
+import { GitHub } from '../src/github.js';
+import { matchItem } from '../src/matcher.js';
+import { synchronise } from '../src/synchronise.js';
+import { z } from 'zod';
+const config = configFromEnv(process.env);
+const ai = aiFromEnv(process.env);
+const token = z.string().min(1).parse(process.env['GITHUB_TOKEN']);
+const markdown = await readFile(config.documentPath, 'utf8');
+const index = await synchronise(new GitHub(config.repository, token), parseDocument(markdown), { ...config, revision: revisionOf(markdown) }, (item, units) => matchItem(item, units, ai, config.botLogin), new Date().toISOString());
+await writeIndex(index);

@@ -1,0 +1,42 @@
+{
+  "name": "github-document-annotations",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --mode fixtures --host 0.0.0.0",
+    "dev:plain": "tsx scripts/prepare.ts && vite --host 0.0.0.0",
+    "build": "tsx scripts/build.ts",
+    "sync": "tsx scripts/sync.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "test": "npm run test:unit && npm run test:browser",
+    "test:unit": "vitest run --coverage",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "dev:fixtures": "vite --mode fixtures --host 0.0.0.0",
+    "test:browser": "playwright test",
+    "test:system": "playwright test --project=system",
+    "test:system:ui": "playwright test --project=system --ui",
+    "test:ui": "playwright test --project=ui-desktop --project=ui-mobile",
+    "check:all": "npm run check"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.7",
+    "marked": "^16.4.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^22.18.12",
+    "@vitest/coverage-v8": "^5.0.3",
+    "eslint": "^9.38.0",
+    "globals": "^16.4.0",
+    "jsdom": "^26.1.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2",
+    "vite": "^7.3.7",
+    "vitest": "^5.0.3"
+  }
+}

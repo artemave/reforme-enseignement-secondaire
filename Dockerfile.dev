@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1.5
+FROM dev-base:latest
+
+# Playwright expects Google Chrome at /opt/google/chrome/chrome.
+RUN sudo -n rpm --import https://dl.google.com/linux/linux_signing_key.pub \
+    && curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm -o /tmp/google-chrome-stable.rpm \
+    && rpmkeys --checksig /tmp/google-chrome-stable.rpm \
+    && sudo -n dnf install -y /tmp/google-chrome-stable.rpm \
+    && rm -f /tmp/google-chrome-stable.rpm \
+    && sudo -n dnf clean all
+
+WORKDIR /workspace
+
+COPY mise.toml /workspace/mise.toml
+RUN mise trust && mise install

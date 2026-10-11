@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+public/annotations.json
+.env
+
+.playwright-mcp/
+playwright-report/
+test-results/

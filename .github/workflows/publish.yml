@@ -1,0 +1,92 @@
+name: Synchronise and publish
+on:
+  push:
+  issues:
+    types: [opened, edited, deleted, closed, reopened, labeled, unlabeled, assigned, unassigned, transferred, milestoned, demilestoned, locked, unlocked]
+  issue_comment:
+    types: [created, edited, deleted]
+  pull_request_target:
+    types: [opened, edited, synchronize, closed, reopened, ready_for_review, converted_to_draft, labeled, unlabeled, assigned, unassigned, review_requested, review_request_removed, locked, unlocked]
+  workflow_run:
+    workflows: ['Review activity']
+    types: [completed]
+  milestone:
+  label:
+  release:
+    types: [published, edited, deleted]
+  page_build:
+  repository_dispatch:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+# All writers/deployments share one lock. Pending runs can coalesce safely because
+# every run fetches current state, rather than applying an event delta.
+concurrency:
+  group: document-pages
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  publish:
+    if: >-
+      !(github.event_name == 'issue_comment' && github.event.comment.user.login == 'github-actions[bot]' && startsWith(github.event.comment.body, '<!-- document-annotations:v1 -->')) &&
+      (github.event_name != 'push' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) &&
+      (github.event_name != 'page_build' || github.event.build.pusher.login != 'github-actions[bot]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      DOCUMENT_BRANCH: ${{ github.event.repository.default_branch }}
+      AI_MODEL: ${{ vars.AI_MODEL || 'gpt-4.1-mini' }}
+      AI_ENDPOINT: ${{ vars.AI_ENDPOINT || 'https://api.openai.com/v1/chat/completions' }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      # Never execute a PR head/ref on privileged events. This also gives reviews,
+      # scheduled jobs and queued events the CURRENT published document.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install browser for workflow tests
+        run: npx playwright install --with-deps chrome
+      - name: Check types, lint and all tests
+        run: npm run check
+      - name: Validate workflows
+        run: |
+          curl -fsSL https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz -o /tmp/actionlint.tar.gz
+          tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint
+          /tmp/actionlint
+      - uses: actions/configure-pages@v5
+      - run: npm run sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Preserve browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-workflow-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
