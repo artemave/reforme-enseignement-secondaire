@@ -60,11 +60,12 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
     const button = link(root, '', new URL(unit.kind === 'title' ? '#annotations' : passagePath(index, unit), root.baseURI).href); button.className = 'annotation-button';
     const matching = annotations.filter((item) => item.targetId === unit.id);
     button.innerHTML = '<svg class="annotation-shape" viewBox="0 0 44 44" aria-hidden="true"><path d="M15 7H29Q38 7 38 16V27Q38 36 29 36H22L15 41V36Q6 36 6 27V16Q6 7 15 7Z" /></svg>';
-    button.append(root.createTextNode(matching.length === 0 ? '+' : String(matching.length)));
+    const label = root.createElement('span'); label.className = 'annotation-label';
+    label.textContent = matching.length === 0 ? '+' : String(matching.length); button.append(label);
     button.classList.toggle('has-items', matching.length > 0);
     button.setAttribute('aria-label', `${String(matching.length)} échange(s) : ${unit.label}`);
     row.append(passage);
-    if (target === undefined) row.append(button);
+    if (target === undefined) row.prepend(button);
     if (target === undefined || unit.id === target.id) units.append(row);
     if (unit.kind === 'section') contents.append(link(root, unit.label, new URL(`./#${unit.id}`, root.baseURI).href));
   }

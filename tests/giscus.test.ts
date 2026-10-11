@@ -10,7 +10,10 @@ it('loads a specific discussion with public IDs and replaces the previous widget
   embedDiscussion(configured, annotation, document, container);
   expect(container.querySelector('script')?.getAttribute('data-mapping')).toBe('number');
   expect(container.querySelector('script')?.getAttribute('data-term')).toBe('3');
+  document.documentElement.dataset['theme'] = 'dark';
   embedDiscussion(configured, { ...annotation, number: 4 }, document, container);
+  expect(container.querySelector('script')?.getAttribute('data-theme')).toBe('dark');
+  delete document.documentElement.dataset['theme'];
   expect(container.querySelector('script')?.getAttribute('data-term')).toBe('4');
   expect(container.children).toHaveLength(1);
   embedDiscussion(configured, unit, document, container);

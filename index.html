@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/src/style.css" />
+  <style>@view-transition{navigation:auto}</style>
   <meta name="description" content="Un document de travail ouvert à la discussion. Retrouvez les questions et propositions liées à chaque passage." />
   <title>Réforme de l’enseignement secondaire</title>
 </head>
 <body>
   <a class="skip" href="#document">Aller au document</a>
-  <header class="site-header"><details class="contents page-frame"><summary aria-label="Sommaire"><span aria-hidden="true">☰</span></summary><nav id="contents" aria-label="Sommaire"></nav></details></header>
+  <header class="site-header"><div class="page-frame"><details class="contents"><summary aria-label="Sommaire"><span aria-hidden="true">☰</span></summary><nav id="contents" aria-label="Sommaire"></nav></details></div></header>
   <div class="workspace">
     <main id="document" tabindex="-1"><div class="document-meta"><span class="status-dot" aria-hidden="true"></span><span id="updated"></span></div><div id="units"><p role="status">Chargement du document…</p></div></main>
 
   </div>
-  <footer class="document-footer"><div class="page-frame"><a id="repository" href="https://github.com/artemave/reforme-enseignement-secondaire">Voir sur GitHub <span aria-hidden="true">↗</span></a></div></footer>
+  <footer class="document-footer"><div class="page-frame footer-controls"><a id="repository" href="https://github.com/artemave/reforme-enseignement-secondaire">Voir sur GitHub <span aria-hidden="true">↗</span></a><button id="theme-toggle" class="theme-toggle" type="button" aria-label="Activer le mode sombre">☾</button></div></footer>
   <section id="annotations" class="passage-discussions" aria-labelledby="panel-title" hidden><h2 id="panel-title"></h2><div class="panel-content"><nav id="items" aria-label="Autres discussions"></nav><div id="thread" class="giscus"></div></div></section>
   <script type="module" src="/src/main.ts"></script>
 </body>

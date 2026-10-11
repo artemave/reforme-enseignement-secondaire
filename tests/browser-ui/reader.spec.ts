@@ -25,7 +25,7 @@ test('The reader fits the screen and its navigation, annotations and contributio
     await expect(contents).not.toBeVisible();
   });
 
-  await test.step('Dark mode follows the system preference and keeps the bubble hover continuous', async () => {
+  await test.step('The theme switch persists across navigation and keeps the bubble hover continuous', async () => {
     await page.emulateMedia({ colorScheme: 'light' });
     const lightBackground = await page.locator('html').evaluate((element) => getComputedStyle(element).backgroundColor);
     await page.emulateMedia({ colorScheme: 'dark' });
@@ -36,7 +36,14 @@ test('The reader fits the screen and its navigation, annotations and contributio
       await expect(outline).toHaveCount(1);
       expect(await outline.evaluate((path) => getComputedStyle(path).fill)).not.toBe('none');
     }
+    await activate(page.getByRole('button', { name: 'Activer le mode clair' }));
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await activate(page.getByRole('button', { name: 'Activer le mode sombre' }));
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await page.emulateMedia({ colorScheme: 'light' });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 
   if (info.project.use.hasTouch === true) {
@@ -65,6 +72,7 @@ test('The reader fits the screen and its navigation, annotations and contributio
     await expect(page.locator('blockquote')).toHaveCount(1);
     await expect(page.locator('#units blockquote')).toContainText('L’école doit permettre');
     await expect(page.locator('.document-meta')).toBeHidden();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await expect(page.locator('dialog')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await activate(page.getByRole('link', { name: 'Revenir au document' }));
