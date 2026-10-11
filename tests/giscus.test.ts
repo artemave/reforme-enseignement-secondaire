@@ -18,8 +18,23 @@ it('loads a specific discussion with public IDs and replaces the previous widget
   expect(container.children).toHaveLength(1);
   embedDiscussion(configured, unit, document, container);
   expect(container.querySelector('script')?.getAttribute('data-mapping')).toBe('specific');
-  expect(container.querySelector('script')?.getAttribute('data-term')).toBe('hash/u-1: # Title');
+  expect(container.querySelector('script')?.getAttribute('data-term')).toBe(`hash/u-1: # Title (${index.generatedAt})`);
   expect(container.querySelector('script')?.getAttribute('data-strict')).toBe('1');
   embedDiscussion(configured, { ...annotation, kind: 'pr' }, document, container);
   expect(container.children).toHaveLength(0);
+});
+
+it('starts a fresh thread after republication while retaining open discussions by number', () => {
+  const container = document.createElement('div');
+  const configured = { ...index, giscus: { repositoryId: 'repo', categoryId: 'cat', category: 'General', categorySlug: 'general', clientUrl: 'https://giscus.app/client.js' } };
+  embedDiscussion(configured, unit, document, container);
+  const previous = container.querySelector('script')?.getAttribute('data-term');
+  const republished = { ...configured, generatedAt: '2026-10-11T20:39:12.333Z' };
+  embedDiscussion(republished, unit, document, container);
+  expect(container.querySelector('script')?.getAttribute('data-term')).not.toBe(previous);
+  expect(container.querySelector('script')?.getAttribute('data-strict')).toBe('1');
+  embedDiscussion(configured, annotation, document, container);
+  expect(container.querySelector('script')?.getAttribute('data-term')).toBe('3');
+  embedDiscussion(republished, annotation, document, container);
+  expect(container.querySelector('script')?.getAttribute('data-term')).toBe('3');
 });

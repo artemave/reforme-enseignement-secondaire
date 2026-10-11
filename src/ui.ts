@@ -85,7 +85,8 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
 
 export async function load(root: Document, fetcher: Fetch = fetch): Promise<void> {
   try {
-    const response = await fetcher('./annotations.json');
+    // This URL stays the same across publications; never reuse a previous index.
+    const response = await fetcher('./annotations.json', { cache: 'no-store' });
     if (!response.ok) throw new Error('Index unavailable');
     const index = indexSchema.parse(await response.json() as unknown);
     const base = new URL('.', root.baseURI).pathname;

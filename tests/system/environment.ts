@@ -90,7 +90,7 @@ export function github(page: Page) {
       await submit('Publier ce document fictif');
     },
     followPeer: async (number: number) => {
-      await page.locator('[data-bot-comment]').getByRole('link', { name: new RegExp(`^(?:Discussion|Issue|PR) #${String(number)}$`, 'u') }).click();
+      await page.locator('[data-bot-comment]').getByRole('link', { name: new RegExp(`^(?:Discussion|Issue|PR) #${String(number)} :`, 'u') }).click();
     },
     comments: async (number: number) => {
       const state = z.object({ items: z.array(z.object({ number: z.number(), comments: z.array(z.object({ body: z.string() })) })) }).parse(await (await page.request.get('/__dev/state', { maxRetries: 1 })).json() as unknown);

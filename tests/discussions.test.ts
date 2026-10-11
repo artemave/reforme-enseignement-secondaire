@@ -19,8 +19,8 @@ describe('GitHub Discussions', () => {
   });
   it('fetches replies, original history and labels; retains closed discussions for comment reconciliation', async () => {
     const transport = fetchQueue(metadata, connection([post, { ...post, id: 'D_2', number: 2, closed: true }]),
-      connection([{ id: 'C_1', body: 'Root', author: null }, { id: 'C_2', body: 'Root 2', author: { login: 'reader' } }]),
-      connection([{ id: 'C_3', body: 'Reply', author: null }, { id: 'C_4', body: 'Reply 2', author: { login: 'other' } }]), connection([]),
+      connection([{ id: 'C_1', body: 'Root', author: null }, { id: 'C_2', body: 'Root 2', author: { __typename: 'User', login: 'reader' } }]),
+      connection([{ id: 'C_3', body: 'Reply', author: null }, { id: 'C_4', body: 'Reply 2', author: { __typename: 'User', login: 'other' } }]), connection([]),
       connection([{ diff: 'Original', editedAt: 'date', deletedAt: null }]), connection([{ name: 'label' }]),
       connection([]), connection([]));
     const github = new Discussions('a/b', 'token', transport);
@@ -53,6 +53,7 @@ describe('GitHub Discussions', () => {
     const github = new Discussions(fixtureRepository, 'fake', backend.fetch);
     await github.state();
     await github.writeComment(1, 'created');
+    expect((await github.state())[0]?.comments[0]?.login).toBe('github-actions[bot]');
     await github.writeComment(1, 'updated', 'C_1000');
     expect(backend.item(1).comments[0]?.body).toBe('updated');
     await github.deleteComment('C_1000');

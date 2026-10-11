@@ -16,12 +16,13 @@ describe('synchronisation', () => {
     expect(github.writeComment.mock.calls[0]?.[1]).toContain('Issue #1');
     expect(github.writeComment.mock.calls[1]?.[1]).toContain('PR #3');
     expect(github.writeComment.mock.calls[0]?.[1]).not.toContain('Issue #2');
-    expect(github.writeComment.mock.calls[2]?.[1]).toContain('No other open items');
-    expect(github.writeComment.mock.calls[3]?.[1]).toContain('No confident match');
-    expect(github.writeComment.mock.calls[0]?.[1]).toContain('does not imply resolution');
+    expect(github.writeComment).toHaveBeenCalledTimes(2);
+    expect(github.writeComment.mock.calls[0]?.[1]).not.toContain('revision');
+    expect(github.writeComment.mock.calls[0]?.[1]).not.toContain('resolution');
   });
   it('updates changed bot comments, removes duplicates, preserves human spoofed markers and leaves unchanged comments alone', async () => {
-    const github = api([item]);
+    const peer = { ...item, number: 2 };
+    const github = api([item, peer]);
     await synchronise(github, [unit], config, () => Promise.resolve(matched), now);
     const body: unknown = github.writeComment.mock.calls[0]?.[1];
     if (typeof body !== 'string') throw new Error('Expected comment');
@@ -30,11 +31,11 @@ describe('synchronisation', () => {
       { id: 2, body: BOT_MARKER, login: config.botLogin },
       { id: 3, body: BOT_MARKER, login: 'reader' },
       { id: 4, body: 'other bot comment', login: config.botLogin },
-    ] }]);
+    ] }, peer]);
     await synchronise(second, [unit], config, () => Promise.resolve(matched), now);
-    expect(second.writeComment).not.toHaveBeenCalled();
+    expect(second.writeComment).not.toHaveBeenCalledWith(1, expect.anything(), expect.anything(), expect.anything());
     expect(second.deleteComment).toHaveBeenCalledExactlyOnceWith(2);
-    const third = api([{ ...item, comments: [{ id: 1, body: 'old', login: config.botLogin }, { id: 5, body: BOT_MARKER, login: config.botLogin }] }]);
+    const third = api([{ ...item, comments: [{ id: 1, body: 'old', login: config.botLogin }, { id: 5, body: BOT_MARKER, login: config.botLogin }] }, peer]);
     await synchronise(third, [unit], config, () => Promise.resolve(matched), now);
     expect(third.writeComment).toHaveBeenCalledWith(1, body, 5, 'issue');
   });
@@ -43,16 +44,17 @@ describe('synchronisation', () => {
     const match = vi.fn().mockResolvedValue({ ...matched, targetId: null });
     const result = await synchronise(github, [unit], config, match, now);
     expect(result.annotations).toEqual([]); expect(match).toHaveBeenCalledTimes(1);
-    expect(github.writeComment).toHaveBeenCalledTimes(2);
+    expect(github.writeComment).not.toHaveBeenCalled();
+    expect(github.deleteComment).toHaveBeenCalledExactlyOnceWith(1);
   });
-  it('distinguishes a Discussion and PR with the same number and uses revision-specific cross-references', async () => {
+  it('distinguishes a Discussion and PR with the same number and links only to peers', async () => {
     const paragraph = { ...unit, kind: 'paragraph' as const };
     const github = { ...api([{ ...item, kind: 'discussion' }, { ...item, kind: 'pr' }]), giscus: { repositoryId: 'repo', categoryId: 'cat', category: 'General', categorySlug: 'general', clientUrl: 'https://giscus.app/client.js' } };
     const result = await synchronise(github, [paragraph], config, () => Promise.resolve(matched), now);
     expect(result.annotations.map((entry) => entry.kind)).toEqual(['discussion', 'pr']);
     expect(github.writeComment.mock.calls[0]?.[1]).toContain('PR #1');
     expect(github.writeComment.mock.calls[1]?.[1]).toContain('Discussion #1');
-    expect(github.writeComment.mock.calls[0]?.[1]).toContain('/passage/hash/u-1/');
+    expect(github.writeComment.mock.calls[0]?.[1]).not.toContain('Target:');
     expect(result.giscus?.repositoryId).toBe('repo');
   });
   it('does not mutate if any mapping fails', async () => {

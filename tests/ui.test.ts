@@ -93,7 +93,9 @@ describe('static reader', () => {
     expect(() => { render(index, document); }).toThrow('Missing element: #units');
   });
   it('loads and validates the generated index', async () => {
-    await load(document, fetchQueue(index));
+    const fetcher = fetchQueue(index);
+    await load(document, fetcher);
+    expect(fetcher).toHaveBeenCalledWith('./annotations.json', { cache: 'no-store' });
     expect(document.querySelector('#u-1')).not.toBeNull();
   });
   it('handles HTTP, invalid index, invalid JSON and network errors visibly', async () => {

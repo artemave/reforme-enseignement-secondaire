@@ -11,7 +11,7 @@ import { Discussions } from '../src/discussions.js';
 import { BOT_MARKER } from '../src/matcher.js';
 import { indexSchema, unitSchema } from '../src/model.js';
 
-it('opening and closing a passage-linked issue publishes and removes its annotation', async () => {
+it('opening and closing a passage-linked discussion publishes and removes its annotation', async () => {
   const workspace = new FixtureWorkspace(await readFile('dev/fixtures/document.md', 'utf8'));
   await workspace.dispatch({ type: 'rebuild' });
   const onPublished = vi.fn();
@@ -52,17 +52,14 @@ it('opening and closing a passage-linked issue publishes and removes its annotat
     expect(issue?.open).toBe(true);
     expect(issue?.body).toContain(passage.markdown);
     const comments = issue?.comments.filter((comment) => comment.body.startsWith(BOT_MARKER));
-    expect(comments).toHaveLength(1);
-    expect(comments?.[0]?.body).toContain(`Target: [${passage.id}]`);
+    expect(comments).toHaveLength(0);
 
     await action({ type: 'state', number, state: 'closed' });
     expect((await published()).annotations).toEqual(before.annotations);
     const closed = (await github.state()).find((item) => item.number === number);
     expect(closed?.open).toBe(false);
     const reconciled = closed?.comments.filter((comment) => comment.body.startsWith(BOT_MARKER));
-    expect(reconciled).toHaveLength(1);
-    expect(reconciled?.[0]?.id).toBe(comments?.[0]?.id);
-    expect(reconciled?.[0]?.body).not.toContain('Target:');
+    expect(reconciled).toHaveLength(0);
     expect(onPublished).toHaveBeenCalledTimes(2);
   } finally {
     await new Promise<void>((resolve, reject) => { server.close((error) => { if (error !== undefined) reject(error); else resolve(); }); });

@@ -135,7 +135,7 @@ export class FakeGitHub {
       const item = this.item(Number(id.slice(2)));
       if (query.includes('connection:userContentEdits')) values = item.edits;
       else if (query.includes('connection:labels')) values = item.labels.map((name) => ({ name }));
-      else values = item.comments.map((comment) => ({ id: `C_${String(comment.id)}`, body: comment.body, author: { login: comment.login } }));
+      else values = item.comments.map((comment) => ({ id: `C_${String(comment.id)}`, body: comment.body, author: { __typename: comment.login.endsWith('[bot]') ? 'Bot' : 'User', login: comment.login.replace(/\[bot\]$/u, '') } }));
     }
     const offset = Number(variables['cursor'] ?? '0');
     const nodes = values.slice(offset, offset + 100);

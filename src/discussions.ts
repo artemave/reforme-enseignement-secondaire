@@ -8,7 +8,9 @@ const page = z.object({ nodes: z.array(z.unknown()), pageInfo: z.object({ hasNex
 const response = z.object({ data: z.object({ node: z.object({ connection: page }) }) });
 const metadata = z.object({ data: z.object({ repository: z.object({ id: z.string(), discussionCategories: z.object({ nodes: z.array(z.object({ id: z.string(), name: z.string(), slug: z.string() })) }) }) }) });
 const discussion = z.object({ id: z.string(), number: z.number(), title: z.string(), body: z.string(), url: z.string(), closed: z.boolean(), includesCreatedEdit: z.boolean(), lastEditedAt: z.string().nullable() });
-const comment = z.object({ id: z.string(), body: z.string(), author: z.object({ login: z.string() }).nullable() });
+// GraphQL Bot.logins omit the [bot] suffix used by REST and our configuration.
+const actor = z.object({ __typename: z.string(), login: z.string() }).transform((value) => value.__typename === 'Bot' ? `${value.login}[bot]` : value.login);
+const comment = z.object({ id: z.string(), body: z.string(), author: actor.nullable() });
 const edit = z.object({ diff: z.string().nullable(), editedAt: z.string(), deletedAt: z.string().nullable() });
 
 /** Fetch Discussions and their context for matching and comment reconciliation. */
@@ -46,12 +48,12 @@ export class Discussions {
       const entry = discussion.parse(raw);
       this.ids.set(entry.number, entry.id);
       const comments: Comment[] = [];
-      for (const rawComment of await this.nodes(entry.id, 'Discussion', 'comments', 'id body author{login}')) {
+      for (const rawComment of await this.nodes(entry.id, 'Discussion', 'comments', 'id body author{__typename login}')) {
         const parsed = comment.parse(rawComment);
-        comments.push({ id: parsed.id, body: parsed.body, login: parsed.author?.login ?? '[deleted]' });
-        for (const reply of await this.nodes(parsed.id, 'DiscussionComment', 'replies', 'id body author{login}')) {
+        comments.push({ id: parsed.id, body: parsed.body, login: parsed.author ?? '[deleted]' });
+        for (const reply of await this.nodes(parsed.id, 'DiscussionComment', 'replies', 'id body author{__typename login}')) {
           const parsedReply = comment.parse(reply);
-          comments.push({ id: parsedReply.id, body: parsedReply.body, login: parsedReply.author?.login ?? '[deleted]' });
+          comments.push({ id: parsedReply.id, body: parsedReply.body, login: parsedReply.author ?? '[deleted]' });
         }
       }
       const edits = entry.closed ? [] : (await this.nodes(entry.id, 'Discussion', 'userContentEdits', 'diff editedAt deletedAt')).map((rawEdit) => edit.parse(rawEdit));
