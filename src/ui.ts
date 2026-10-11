@@ -53,6 +53,10 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
     const row = root.createElement('section'); row.id = unit.id; row.className = `unit ${unit.kind}`;
     const passage = root.createElement(target === undefined ? 'div' : 'blockquote'); passage.className = 'passage';
     passage.innerHTML = DOMPurify.sanitize(unit.html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style', 'form', 'input', 'button'], FORBID_ATTR: ['id', 'name'] });
+    for (const heading of passage.querySelectorAll('h2,h3,h4,h5,h6')) {
+      const anchor = link(root, '', new URL(`./#${unit.id}`, root.baseURI).href);
+      anchor.append(...heading.childNodes); heading.append(anchor);
+    }
     const button = link(root, '', new URL(unit.kind === 'title' ? '#annotations' : passagePath(index, unit), root.baseURI).href); button.className = 'annotation-button';
     const matching = annotations.filter((item) => item.targetId === unit.id);
     button.innerHTML = '<svg class="annotation-shape" viewBox="0 0 44 44" aria-hidden="true"><path d="M15 7H29Q38 7 38 16V27Q38 36 29 36H22L15 41V36Q6 36 6 27V16Q6 7 15 7Z" /></svg>';

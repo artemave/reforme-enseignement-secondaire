@@ -17,7 +17,6 @@ test('A shared passage page lets a reader comment in the GitHub discussion', asy
   await test.step('Then the comment is stored on GitHub and the passage keeps its related items', async () => {
     await expect.poll(async () => ({ items: await reader(shared).pageItems(), comment: await github(shared).comments(3) }))
       .toEqual({ items: [3, 4], comment: expect.arrayContaining(['Une remarque depuis la page partagée.']) });
-    await shared.close();
   });
 });
 

@@ -14,8 +14,9 @@ function button(id: string) {
 }
 describe('static reader', () => {
   it('renders safe Markdown and contents with accessible annotation controls', () => {
-    render({ ...index, units: [unit, { ...unit, id: 'u-2', kind: 'section', label: 'Section' }, { ...unit, id: 'u-3', kind: 'paragraph', html: '<p id="spoof">Hello<script>alert(1)</script><img src="x" onerror="alert(1)"><a href="javascript:alert(1)">bad</a><style>body{display:none}</style></p>' }], annotations: [{ number: 1, kind: 'discussion', title: item.title, url: item.url, targetId: unit.id }, { number: 2, kind: 'pr', title: 'Proposal', url: 'https://github.com/a/b/pull/2', targetId: unit.id }] }, document);
+    render({ ...index, units: [unit, { ...unit, id: 'u-2', kind: 'section', label: 'Section', html: '<h2>Section</h2>' }, { ...unit, id: 'u-3', kind: 'paragraph', html: '<p id="spoof">Hello<script>alert(1)</script><img src="x" onerror="alert(1)"><a href="javascript:alert(1)">bad</a><style>body{display:none}</style></p>' }], annotations: [{ number: 1, kind: 'discussion', title: item.title, url: item.url, targetId: unit.id }, { number: 2, kind: 'pr', title: 'Proposal', url: 'https://github.com/a/b/pull/2', targetId: unit.id }] }, document);
     expect(document.querySelector('#contents')?.textContent).toBe('Section');
+    expect(document.querySelector<HTMLAnchorElement>('#u-2 h2 a')?.href).toBe('http://localhost:3000/#u-2');
     expect(document.querySelector('#units script')).toBeNull();
     expect(document.querySelector('#units style')).toBeNull();
     expect(document.querySelector('#units [onerror]')).toBeNull();
