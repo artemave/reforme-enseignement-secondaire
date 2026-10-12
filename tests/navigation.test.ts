@@ -94,3 +94,14 @@ it('uses the paragraph anchor when a shared discussion page has no previous read
   restoreDocumentScroll(document);
   expect(scroll).toHaveBeenCalledWith({ behavior: 'instant' });
 });
+
+it('restores the current history position when Safari revives a cached document', () => {
+  resizeObserver();
+  const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+  restoreDocumentScroll(document);
+  history.replaceState({ documentScroll: { left: 0, top: 450 } }, '');
+  window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted: false }));
+  expect(scroll).not.toHaveBeenCalled();
+  window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted: true }));
+  expect(scroll).toHaveBeenCalledWith({ left: 0, top: 450, behavior: 'instant' });
+});

@@ -18,7 +18,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Install browser for workflow tests
-        run: npx playwright install --with-deps chrome
+        run: npx playwright install --with-deps chrome webkit
       - name: Check types, lint and all tests
         run: npm run check
       - name: Validate workflows

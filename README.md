@@ -6,7 +6,7 @@ The published document is `content/document.md`. Development and tests use the s
 
 ## Run locally
 
-Requires Node.js 22.12+ and Google Chrome for browser tests. Chrome is included in `Dockerfile.dev`; on Ubuntu/Debian, install it with `npx playwright install --with-deps chrome` after `npm ci`.
+Requires Node.js 22.12+, Google Chrome and Playwright WebKit for browser tests. Chrome is included in `Dockerfile.dev`; on Ubuntu/Debian, install it with `npx playwright install --with-deps chrome webkit` after `npm ci`.
 
 ```sh
 npm ci
@@ -32,7 +32,7 @@ Fixture mode serves its index from memory; it never overwrites `public/annotatio
 
 ## Automated tests
 
-`bun run test` (or `npm test`) runs all unit, integration, system and UI tests. A failure in any suite fails the command. Use `bun run test:unit` for unit/integration tests, `bun run test:system` for the system scenarios, `bun run test:ui` for desktop/mobile UI smoke checks, or `bun run test:browser` for all browser tests.
+`bun run test` (or `npm test`) runs all unit, integration, system and UI tests. A failure in any suite fails the command. Use `bun run test:unit` for unit/integration tests, `bun run test:system` for the system scenarios, `bun run test:ui` for desktop/mobile UI smoke checks and mobile WebKit scroll restoration, or `bun run test:browser` for all browser tests.
 
 [The publication integration test](tests/annotation-publication.test.ts) covers one complete open/close cycle through HTTP, the shared GitHub backend, the real adapter/matching/synchronisation pipeline, published annotation JSON and bot comment reconciliation. Given/When/Then system scenarios separately check business outcomes through reader and GitHub actions.
 
@@ -42,7 +42,7 @@ npm run test:system:ui
 npm run check:all
 ```
 
-The first command runs each Given/When/Then system scenario once in real Chrome. The second opens Playwright's interactive runner. The third runs TypeScript, lint, 100% unit/integration coverage and the browser suite. Chrome is included in `Dockerfile.dev`; on Ubuntu/Debian and in CI, `npx playwright install --with-deps chrome` installs it. Each test resets and reuses the same fake backend as the interactive simulator, and fails on external browser requests.
+The first command runs each Given/When/Then system scenario once in real Chrome. The second opens Playwright's interactive runner. The third runs TypeScript, lint, 100% unit/integration coverage and the browser suite. Chrome is included in `Dockerfile.dev`; on Ubuntu/Debian and in CI, `npx playwright install --with-deps chrome webkit` installs it. Each test resets and reuses the same fake backend as the interactive simulator, and fails on external browser requests.
 
 Read [the workflow descriptions](tests/system/README.md) or the [scenarios grouped by behavior](tests/system/). Failures retain traces/screenshots under `test-results/` and a report under `playwright-report/`; CI saves them as artifacts. These tests cover the reader and local synchronisation behavior, rather than real GitHub/AI service availability or Actions/Pages infrastructure.
 

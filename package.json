@@ -17,7 +17,7 @@
     "test:browser": "playwright test",
     "test:system": "playwright test --project=system",
     "test:system:ui": "playwright test --project=system --ui",
-    "test:ui": "playwright test --project=ui-desktop --project=ui-mobile",
+    "test:ui": "playwright test --project=ui-desktop --project=ui-mobile --project=ui-safari",
     "check:all": "npm run check"
   },
   "dependencies": {

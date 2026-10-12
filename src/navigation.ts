@@ -24,17 +24,22 @@ export function restoreDocumentScroll(root: Document): void {
   browser.addEventListener('pagehide', () => {
     browser.history.replaceState({ documentScroll: { left: browser.scrollX, top: browser.scrollY } }, '');
   });
-  const saved = scrollState.safeParse(browser.history.state as unknown);
-  if (!saved.success) {
-    root.getElementById(new URL(root.URL).hash.slice(1))?.scrollIntoView({ behavior: 'instant' });
-    return;
-  }
-  const restore = (): void => {
-    browser.scrollTo({ ...saved.data.documentScroll, behavior: 'instant' });
-    if (Math.abs(browser.scrollY - saved.data.documentScroll.top) < 1) observer.disconnect();
+  const restorePosition = (): void => {
+    const saved = scrollState.safeParse(browser.history.state as unknown);
+    if (!saved.success) {
+      root.getElementById(new URL(root.URL).hash.slice(1))?.scrollIntoView({ behavior: 'instant' });
+      return;
+    }
+    const restore = (): void => {
+      browser.scrollTo({ ...saved.data.documentScroll, behavior: 'instant' });
+      if (Math.abs(browser.scrollY - saved.data.documentScroll.top) < 1) observer.disconnect();
+    };
+    // The comment widget can increase page height after load; retry a clamped position.
+    const observer = new browser.ResizeObserver(restore);
+    observer.observe(root.body);
+    restore();
   };
-  // The comment widget can increase page height after load; retry a clamped position.
-  const observer = new browser.ResizeObserver(restore);
-  observer.observe(root.body);
-  restore();
+  // Safari can restore the existing page from its back/forward cache without rerunning scripts.
+  browser.addEventListener('pageshow', (event) => { if (event.persisted) restorePosition(); });
+  restorePosition();
 }
