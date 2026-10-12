@@ -94,7 +94,7 @@ describe('development-only pages and routes', () => {
   it('installs fixtures only for explicit development mode, never build mode', async () => {
     expect(viteConfig({ command: 'build', mode: 'fixtures' }).plugins).toEqual([]);
     expect(viteConfig({ command: 'serve', mode: 'development' }).plugins).toEqual([]);
-    expect(viteConfig({ command: 'serve', mode: 'fixtures' }).optimizeDeps).toEqual({ entries: ['index.html'] });
+    expect(viteConfig({ command: 'serve', mode: 'fixtures' }).optimizeDeps).toEqual({ entries: ['index.html'], include: ['marked'] });
     const cacheDir = await mkdtemp(join(tmpdir(), 'document-fixture-test-'));
     const logger = createLogger();
     const errors = vi.spyOn(logger, 'error');

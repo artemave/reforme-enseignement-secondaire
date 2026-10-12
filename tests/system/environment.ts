@@ -43,7 +43,7 @@ export const test = base.extend<{ networkIsolation: Promise<void>; repositorySta
     await networkIsolation;
     const reset = await request.post('/__dev/action', { data: { type: 'reset' } });
     if (!reset.ok()) throw new Error('Could not reset the test repository');
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.locator('#units .unit').first().waitFor();
     await use(undefined);
   }, { auto: true }],
