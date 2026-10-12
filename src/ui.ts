@@ -1,4 +1,4 @@
-import { preserveDocumentScroll, restoreDocumentScroll } from './navigation.js';
+import { preserveDocumentScroll } from './navigation.js';
 import { renderHelp } from './help.js';
 import { passagePath, resolvePassage } from './routes.js';
 import { embedDiscussion } from './giscus.js';
@@ -107,6 +107,8 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
 export async function load(root: Document, fetcher: Fetch = fetch): Promise<void> {
   try {
     // This URL stays the same across publications; never reuse a previous index.
+    // Back navigation is available immediately, before the freshness request finishes.
+    root.querySelectorAll<HTMLAnchorElement>('[data-document-back]').forEach((back) => { preserveDocumentScroll(root, back); });
     const embedded = root.querySelector('#annotation-index');
     const response = await fetcher('./annotations.json', { cache: 'no-store' });
     if (!response.ok) throw new Error('Index unavailable');
@@ -115,18 +117,15 @@ export async function load(root: Document, fetcher: Fetch = fetch): Promise<void
     const base = new URL('.', root.baseURI).pathname;
     if (new URL(root.URL).pathname === `${base}comment-ca-marche/`) {
       if (!reuse) renderHelp(index, root);
-      else root.querySelectorAll<HTMLAnchorElement>('[data-document-back]').forEach((back) => { preserveDocumentScroll(root, back); });
       return;
     }
     const route = resolvePassage(index, new URL(root.URL).pathname, base);
     if (route.redirect) root.defaultView?.history.replaceState(null, '', base);
     if (!reuse) render(index, root, route.target);
     else {
-      root.querySelectorAll<HTMLAnchorElement>('[data-document-back]').forEach((back) => { preserveDocumentScroll(root, back); });
       const selected = route.target ?? index.units.find((unit) => unit.kind === 'title');
       if (selected !== undefined) openDiscussion(index, root, selected);
     }
-    if (route.target === undefined) restoreDocumentScroll(root);
     if (route.notice !== undefined) {
       const notice = root.createElement('p'); notice.className = 'flash'; notice.setAttribute('role', 'status'); notice.textContent = route.notice;
       element<HTMLElement>(root, '#document').prepend(notice);
