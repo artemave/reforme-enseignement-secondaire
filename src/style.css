@@ -15,15 +15,3 @@
 :root[data-theme="light"]{color-scheme:light}.footer-controls{display:flex;align-items:center;justify-content:space-between;gap:12px}.theme-toggle{width:44px;height:44px;align-self:start;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--text);font-size:24px}.theme-toggle:hover{background:var(--hover)}
 
 .help-page{font-size:16px;line-height:1.7}.help-page h1{font-size:28px;margin:28px 0 16px}.help-page h2{font-size:18px;margin:24px 0 6px}.help-page p{margin:0 0 12px}
-
-@media(prefers-reduced-motion:no-preference){
-html:active-view-transition-type(discussion)::view-transition-old(root){animation:260ms ease-out both slide-out-left;mix-blend-mode:normal}
-html:active-view-transition-type(discussion)::view-transition-new(root){animation:260ms ease-out both slide-in-right;mix-blend-mode:normal}
-html:active-view-transition-type(document)::view-transition-old(root){animation:260ms ease-out both slide-out-right;mix-blend-mode:normal}
-html:active-view-transition-type(document)::view-transition-new(root){animation:260ms ease-out both slide-in-left;mix-blend-mode:normal}
-}
-@media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root),::view-transition-group(root){animation:none}}
-@keyframes slide-out-left{to{transform:translateX(-100%)}}
-@keyframes slide-in-right{from{transform:translateX(100%)}}
-@keyframes slide-out-right{to{transform:translateX(100%)}}
-@keyframes slide-in-left{from{transform:translateX(-100%)}}
