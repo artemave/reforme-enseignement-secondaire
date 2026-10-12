@@ -7,6 +7,8 @@ describe('local-only GitHub navigation', () => {
     document.body.innerHTML = `<a id="item" href="https://github.com/${fixtureRepository}/issues/3?body=quote#context"><span>Item</span></a><a id="repo" href="https://github.com/${fixtureRepository}">Repo</a><a id="other" href="https://github.com/other/repo">Other</a><a id="local" href="/local">Local</a><a id="prefix" href="https://github.com/${fixtureRepository}-other">Different repo</a><p id="text">Plain text</p>`;
     const root = document.implementation.createHTMLDocument(); root.body.innerHTML = document.body.innerHTML;
     installFixtureNavigation(root, fixtureRepository);
+    installFixtureNavigation(root, fixtureRepository);
+    expect(root.querySelectorAll('#fixture-mode')).toHaveLength(1);
     expect(root.querySelector('a#item')?.getAttribute('href')).toContain('/__dev/github/');
     const dynamic = root.createElement('a'); dynamic.href = `https://github.com/${fixtureRepository}/pull/4`; root.body.append(dynamic);
     await new Promise<void>((resolve) => { setTimeout(resolve, 0); });

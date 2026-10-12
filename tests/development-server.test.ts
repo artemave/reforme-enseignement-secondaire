@@ -106,6 +106,7 @@ describe('development-only pages and routes', () => {
       if (address === undefined || address === null || typeof address === 'string') throw new Error('Expected Vite address');
       const base = `http://127.0.0.1:${String(address.port)}`;
       expect(await (await fetch(base)).text()).toContain('/dev/client.ts');
+      expect(await server.transformIndexHtml('/comment-ca-marche/', await readFile('index.html', 'utf8'))).toContain('<h1>Comment ça marche</h1>');
       const index = await (await fetch(`${base}/annotations.json`)).json() as { repository: string };
       expect(index.repository).toBe(fixtureRepository);
       const send = vi.spyOn(server.ws, 'send');

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>try{const theme=localStorage.getItem("theme");if(theme==="light"||theme==="dark")document.documentElement.dataset.theme=theme}catch{}</script>
   <link rel="stylesheet" href="/src/style.css" />
   <meta name="description" content="Un document de travail ouvert à la discussion. Retrouvez les questions et propositions liées à chaque passage." />
   <script type="module" src="/src/main.ts"></script>
@@ -10,7 +11,7 @@
 </head>
 <body>
   <a class="skip" href="#document">Aller au document</a>
-  <header class="site-header"><div class="page-frame"><details class="contents"><summary aria-label="Sommaire"><span aria-hidden="true">☰</span></summary><nav id="contents" aria-label="Sommaire"></nav></details></div></header>
+  <header class="site-header" hidden><div class="page-frame"><details class="contents"><summary aria-label="Sommaire"><span aria-hidden="true">☰</span></summary><nav id="contents" aria-label="Sommaire"></nav></details></div></header>
   <div class="workspace">
     <main id="document" tabindex="-1"><div class="document-meta"><span class="status-dot" aria-hidden="true"></span><span id="updated"></span></div><div id="units"><p role="status">Chargement du document…</p></div></main>
 

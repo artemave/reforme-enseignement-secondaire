@@ -2,6 +2,7 @@ import { preserveDocumentScroll } from './navigation.js';
 import type { AnnotationIndex } from './model.js';
 
 export function renderHelp(index: AnnotationIndex, root: Document): void {
+  root.querySelectorAll<HTMLElement>('.site-header').forEach((header) => { header.hidden = true; });
   const main = root.querySelector('main');
   if (main === null) throw new Error('Missing main element');
   main.className = 'help-page';
@@ -15,6 +16,7 @@ export function renderHelp(index: AnnotationIndex, root: Document): void {
     <p>La lecture est libre. Pour commenter, connectez-vous à GitHub et autorisez giscus. Vos commentaires sont publiés sur GitHub.</p>`;
   const back = root.createElement('a');
   back.href = './';
+  back.dataset['documentBack'] = '';
   back.innerHTML = '<span class="back-chevron" aria-hidden="true">‹</span>Revenir au document';
   preserveDocumentScroll(root, back);
   main.prepend(back);

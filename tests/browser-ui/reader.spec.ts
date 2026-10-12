@@ -13,8 +13,10 @@ test('The reader fits the screen and its navigation, annotations and contributio
   await test.step('The document and section navigation fit the viewport', async () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.locator('.document-meta')).toBeVisible();
+    await expect(page.locator('.site-header')).toBeVisible();
     await activate(page.locator('.document-footer').getByRole('link', { name: 'Comment ça marche' }));
     await expect(page.getByRole('heading', { name: 'Comment ça marche' })).toBeVisible();
+    await expect(page.locator('.site-header')).toBeHidden();
     await expect(page.getByRole('link', { name: 'Voir le projet sur GitHub' })).toHaveAttribute('href', /\/__dev\/github\/development\/document-annotations$/u);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await activate(page.getByRole('link', { name: 'Revenir au document' }));
@@ -85,6 +87,7 @@ test('The reader fits the screen and its navigation, annotations and contributio
     await expect(page.locator('blockquote')).toHaveCount(1);
     await expect(page.locator('#units blockquote')).toContainText('L’école doit permettre');
     await expect(page.locator('.document-meta')).toBeHidden();
+    await expect(page.locator('.site-header')).toBeHidden();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await expect(page.locator('dialog')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

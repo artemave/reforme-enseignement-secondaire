@@ -30,42 +30,47 @@ function sectionHtml(index: AnnotationIndex, target: Unit): string {
   return target.html + (next === -1 ? remaining : remaining.slice(0, next)).map((unit) => unit.html).join('');
 }
 
+function openDiscussion(index: AnnotationIndex, root: Document, unit: Unit): void {
+  const annotations = index.annotations.filter((item) => item.kind === 'discussion');
+  element<HTMLElement>(root, '#panel-title').textContent = unit.kind === 'paragraph' ? 'Discussion du paragraphe' : unit.kind === 'section' ? 'Discussion de la section' : unit.label;
+  const items = element<HTMLElement>(root, '#items'); items.replaceChildren();
+  const matching = annotations.filter((item) => item.targetId === unit.id);
+  const show = (selected: Annotation | Unit): void => {
+    embedDiscussion(index, selected, root, element<HTMLElement>(root, '#thread'));
+    items.replaceChildren();
+    const others = matching.filter((item) => item !== selected);
+    items.hidden = others.length === 0;
+    if (others.length === 0) return;
+    const heading = root.createElement('h3'); heading.textContent = 'Autres discussions';
+    const list = root.createElement('ul');
+    for (const item of others) {
+      const entry = link(root, item.title, item.url);
+      entry.setAttribute('aria-label', `Discussion #${String(item.number)} : ${item.title}`);
+      entry.onclick = (event) => { event.preventDefault(); show(item); };
+      const row = root.createElement('li'); row.append(entry); list.append(row);
+    }
+    items.append(heading, list);
+  };
+  show(matching[0] ?? unit);
+}
+
 export function render(index: AnnotationIndex, root: Document, target?: Unit): void {
   const units = element<HTMLElement>(root, '#units');
   const contents = element<HTMLElement>(root, '#contents');
   const discussionPage = element<HTMLElement>(root, '#annotations');
   const annotations = index.annotations.filter((item) => item.kind === 'discussion');
   units.replaceChildren(); contents.replaceChildren();
+  root.querySelectorAll('[data-document-back]').forEach((back) => { back.remove(); });
   element<HTMLElement>(root, '.document-meta').hidden = target !== undefined;
+  element<HTMLElement>(root, '.site-header').hidden = target !== undefined;
   element<HTMLAnchorElement>(root, '#how-it-works').href = new URL('comment-ca-marche/', root.baseURI).href;
   element<HTMLElement>(root, '#updated').textContent = `Actualisé le ${new Intl.DateTimeFormat('fr', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(index.generatedAt))}`;
-  const open = (unit: Unit): void => {
-    element<HTMLElement>(root, '#panel-title').textContent = unit.kind === 'paragraph' ? 'Discussion du paragraphe' : unit.kind === 'section' ? 'Discussion de la section' : unit.label;
-    const items = element<HTMLElement>(root, '#items'); items.replaceChildren();
-    const matching = annotations.filter((item) => item.targetId === unit.id);
-    const show = (selected: Annotation | Unit): void => {
-      embedDiscussion(index, selected, root, element<HTMLElement>(root, '#thread'));
-      items.replaceChildren();
-      const others = matching.filter((item) => item !== selected);
-      items.hidden = others.length === 0;
-      if (others.length === 0) return;
-      const heading = root.createElement('h3'); heading.textContent = 'Autres discussions';
-      const list = root.createElement('ul');
-      for (const item of others) {
-        const entry = link(root, item.title, item.url);
-        entry.setAttribute('aria-label', `Discussion #${String(item.number)} : ${item.title}`);
-        entry.onclick = (event) => { event.preventDefault(); show(item); };
-        const row = root.createElement('li'); row.append(entry); list.append(row);
-      }
-      items.append(heading, list);
-    };
-    show(matching[0] ?? unit);
-  };
   for (const unit of index.units) {
     const row = root.createElement('section'); row.id = unit.id; row.className = `unit ${unit.kind}`;
     const passage = root.createElement(target === undefined ? 'div' : 'blockquote'); passage.className = 'passage';
     const html = target?.id === unit.id && unit.kind === 'section' ? sectionHtml(index, unit) : unit.html;
-    passage.innerHTML = DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style', 'form', 'input', 'button'], FORBID_ATTR: ['id', 'name'] });
+    const purifier = root.defaultView === null ? DOMPurify : DOMPurify(root.defaultView);
+    passage.innerHTML = purifier.sanitize(html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style', 'form', 'input', 'button'], FORBID_ATTR: ['id', 'name'] });
     for (const heading of passage.querySelectorAll('h2,h3,h4,h5,h6')) {
       const anchor = link(root, '', new URL(`./#${unit.id}`, root.baseURI).href);
       anchor.append(...heading.childNodes); heading.append(anchor);
@@ -86,9 +91,10 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
   discussionPage.hidden = selected === undefined;
   element<HTMLElement>(root, '#panel-title').hidden = target === undefined;
   units.after(discussionPage);
-  if (selected !== undefined) open(selected);
+  if (selected !== undefined) openDiscussion(index, root, selected);
   if (target !== undefined) {
     const back = link(root, 'Revenir au document', new URL(`./#${target.id}`, root.baseURI).href);
+    back.dataset['documentBack'] = '';
     preserveDocumentScroll(root, back);
     const chevron = root.createElement('span'); chevron.className = 'back-chevron';
     chevron.textContent = '‹'; chevron.setAttribute('aria-hidden', 'true');
@@ -101,23 +107,33 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
 export async function load(root: Document, fetcher: Fetch = fetch): Promise<void> {
   try {
     // This URL stays the same across publications; never reuse a previous index.
+    const embedded = root.querySelector('#annotation-index');
     const response = await fetcher('./annotations.json', { cache: 'no-store' });
     if (!response.ok) throw new Error('Index unavailable');
     const index = indexSchema.parse(await response.json() as unknown);
+    const reuse = embedded !== null && JSON.stringify(index) === JSON.stringify(indexSchema.parse(JSON.parse(embedded.textContent) as unknown));
     const base = new URL('.', root.baseURI).pathname;
     if (new URL(root.URL).pathname === `${base}comment-ca-marche/`) {
-      renderHelp(index, root);
+      if (!reuse) renderHelp(index, root);
+      else root.querySelectorAll<HTMLAnchorElement>('[data-document-back]').forEach((back) => { preserveDocumentScroll(root, back); });
       return;
     }
     const route = resolvePassage(index, new URL(root.URL).pathname, base);
     if (route.redirect) root.defaultView?.history.replaceState(null, '', base);
-    render(index, root, route.target);
+    if (!reuse) render(index, root, route.target);
+    else {
+      root.querySelectorAll<HTMLAnchorElement>('[data-document-back]').forEach((back) => { preserveDocumentScroll(root, back); });
+      const selected = route.target ?? index.units.find((unit) => unit.kind === 'title');
+      if (selected !== undefined) openDiscussion(index, root, selected);
+    }
     if (route.target === undefined) restoreDocumentScroll(root);
     if (route.notice !== undefined) {
       const notice = root.createElement('p'); notice.className = 'flash'; notice.setAttribute('role', 'status'); notice.textContent = route.notice;
       element<HTMLElement>(root, '#document').prepend(notice);
     }
   } catch {
+    // A network failure must not discard the readable, already published page.
+    if (root.querySelector('#annotation-index') !== null) return;
     const units = element<HTMLElement>(root, '#units');
     units.textContent = 'Le document est momentanément indisponible. Consultez le fichier Markdown sur GitHub ou réessayez plus tard.';
     units.setAttribute('role', 'alert');

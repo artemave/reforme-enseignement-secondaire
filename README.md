@@ -73,7 +73,7 @@ Each title, heading, and top-level Markdown block has a target and an accessible
 
 Every target embeds its existing GitHub Discussion, or shows a comment form that creates one on the first comment in the General category. New thread titles contain the document revision, target ID and a passage excerpt, providing context for matching.
 
-The frontend fetches the static `annotations.json` and embeds existing Discussions through giscus. Markdown HTML is sanitised, and GitHub item titles are inserted as text. The reader has keyboard focus styles, a skip link, responsive layouts and reduced-motion support. Direct document editing remains reserved for later phases.
+Publication renders the document, paragraph/section pages and help page as complete static HTML using the generated annotation index. The browser activates controls without replacing the published content, checks `annotations.json` without caching to refresh stale publications, and loads Discussions through giscus into reserved space. Fixture development uses the same renderer. Markdown HTML is sanitised, and GitHub item titles are inserted as text. The reader has keyboard focus styles, a skip link, responsive layouts and reduced-motion support. Direct document editing remains reserved for later phases.
 
 ## Matching and derived index
 
