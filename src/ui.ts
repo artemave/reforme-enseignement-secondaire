@@ -1,3 +1,4 @@
+import { preserveDocumentScroll, restoreDocumentScroll } from './navigation.js';
 import { renderHelp } from './help.js';
 import { passagePath, resolvePassage } from './routes.js';
 import { embedDiscussion } from './giscus.js';
@@ -88,6 +89,7 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
   if (selected !== undefined) open(selected);
   if (target !== undefined) {
     const back = link(root, 'Revenir au document', new URL(`./#${target.id}`, root.baseURI).href);
+    preserveDocumentScroll(root, back);
     const chevron = root.createElement('span'); chevron.className = 'back-chevron';
     chevron.textContent = '‹'; chevron.setAttribute('aria-hidden', 'true');
     back.prepend(chevron);
@@ -110,6 +112,7 @@ export async function load(root: Document, fetcher: Fetch = fetch): Promise<void
     const route = resolvePassage(index, new URL(root.URL).pathname, base);
     if (route.redirect) root.defaultView?.history.replaceState(null, '', base);
     render(index, root, route.target);
+    if (route.target === undefined) restoreDocumentScroll(root);
     if (route.notice !== undefined) {
       const notice = root.createElement('p'); notice.className = 'flash'; notice.setAttribute('role', 'status'); notice.textContent = route.notice;
       element<HTMLElement>(root, '#document').prepend(notice);

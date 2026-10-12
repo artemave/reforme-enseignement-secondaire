@@ -67,8 +67,15 @@ test('The reader fits the screen and its navigation, annotations and contributio
       return bounds.width >= 44 && bounds.height >= 44;
     })).toBe(true);
     await learning.focus();
+    await page.evaluate(() => { window.scrollTo({ top: 180, behavior: 'instant' }); });
+    // Measure the position at departure: keyboard focus can scroll during activation.
+    await page.evaluate(() => {
+      window.addEventListener('pagehide', () => { sessionStorage.setItem('test-document-scroll', String(window.scrollY)); }, { once: true });
+    });
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/\/passage\/[^/]+\/u-\d+\/$/u);
+    const initialScroll = await page.evaluate(() => Number(sessionStorage.getItem('test-document-scroll')));
+    expect(initialScroll).toBeGreaterThan(0);
     await expect(discussions.getByRole('heading', { name: 'Autres discussions' })).toBeVisible();
     await expect(discussions.locator('#items li')).toHaveCount(1);
     await expect(discussions.getByRole('link', { name: /Discussion #4/u })).toBeVisible();
@@ -83,6 +90,7 @@ test('The reader fits the screen and its navigation, annotations and contributio
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await activate(page.getByRole('link', { name: 'Revenir au document' }));
     await expect(learning).toBeVisible();
+    await expect.poll(async () => Math.abs(await page.evaluate(() => window.scrollY) - initialScroll)).toBeLessThanOrEqual(2);
   });
 
   await test.step('The empty comment bubble opens its passage page with a local comment form', async () => {

@@ -16,6 +16,7 @@ vi.mock('../src/discussions.js', () => ({ Discussions: vi.fn() }));
 vi.mock('../src/passage-pages.js', () => ({ writePassagePages: vi.fn() }));
 vi.mock('../src/matcher.js', () => ({ matchItem: vi.fn() }));
 vi.mock('../src/synchronise.js', () => ({ synchronise: vi.fn().mockImplementation(async (_github: unknown, _units: unknown, _config: unknown, match: (item: unknown, units: unknown) => Promise<unknown>) => { await match({}, []); return index; }) }));
+vi.mock('../src/transitions.js', () => ({ installPageTransitions: vi.fn() }));
 vi.mock('../src/theme.js', () => ({ installTheme: vi.fn() }));
 vi.mock('../src/ui.js', () => ({ load: vi.fn() }));
 describe('command and browser entrypoints', () => {
