@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { parseDocument } from '../src/document.js';
 import { render, load } from '../src/ui.js';
 import { unit, item, index, fetchQueue } from './fixtures.js';
 const html = readFileSync('index.html', 'utf8');
@@ -24,7 +25,7 @@ describe('static reader', () => {
     expect(document.querySelector('#u-3 .passage a')?.hasAttribute('href')).toBe(false);
     expect(button('#u-1').textContent).toBe('1');
     expect(document.querySelector<HTMLElement>('.document-meta')?.hidden).toBe(false);
-    expect(button('#u-3').textContent).toBe('+');
+    expect(button('#u-3').textContent).toBe('');
     expect(button('#u-1').href).toBe('http://localhost:3000/#annotations');
     expect(button('#u-3').href).toBe('http://localhost:3000/passage/hash/u-3/');
     expect(button('#u-1').getAttribute('aria-haspopup')).toBeNull();
@@ -60,7 +61,7 @@ describe('static reader', () => {
   it('offers a new discussion on an empty passage page and handles an empty document', () => {
     const paragraph = { ...unit, id: 'u-2', kind: 'paragraph' as const };
     render({ ...index, units: [unit, paragraph] }, document, paragraph);
-    expect(document.querySelector('#panel-title')?.textContent).toBe('Discussion du passage');
+    expect(document.querySelector('#panel-title')?.textContent).toBe('Discussion du paragraphe');
     expect(document.querySelector('#items')?.textContent).toBe('');
     expect(document.querySelector('#new-discussion')).toBeNull();
     render({ ...index, units: [] }, document);
@@ -117,4 +118,31 @@ describe('static reader', () => {
     expect(document.querySelector('#u-1')).not.toBeNull();
     vi.unstubAllGlobals();
   });
+});
+
+it('quotes the entire selected section, including subsections, without the next section', () => {
+  const units = parseDocument('# Title\n\n## Learning\n\nFirst paragraph.\n\n### Projects\n\nNested paragraph.\n\n## Support\n\nLast paragraph.');
+  const section = units.find((entry) => entry.label === 'Learning');
+  if (section === undefined) throw new Error('Expected learning section');
+  render({ ...index, units }, document, section);
+  expect(document.querySelector('#panel-title')?.textContent).toBe('Discussion de la section');
+  expect(document.querySelectorAll('#units blockquote')).toHaveLength(1);
+  expect(document.querySelector('#units blockquote')?.textContent).toContain('Nested paragraph.');
+  expect(document.querySelector('#units blockquote')?.textContent).not.toContain('Support');
+  const last = units.find((entry) => entry.label === 'Support');
+  if (last === undefined) throw new Error('Expected support section');
+  render({ ...index, units }, document, last);
+  expect(document.querySelector('#units blockquote')?.textContent).toContain('Last paragraph.');
+});
+
+it('loads the help page under a repository path without rendering document discussions', async () => {
+  document.head.insertAdjacentHTML('afterbegin', '<base href="/repo/">');
+  history.replaceState(null, '', '/repo/comment-ca-marche/');
+  const section = { ...unit, id: 'u-2', kind: 'section' as const, label: 'Section' };
+  await load(document, fetchQueue({ ...index, units: [unit, section] }));
+  expect(document.title).toBe('Comment ça marche — Document');
+  expect(document.querySelector<HTMLAnchorElement>('#repository')?.href).toBe('https://github.com/a/b');
+  expect(document.querySelector<HTMLAnchorElement>('#contents a')?.href).toBe('http://localhost:3000/repo/#u-2');
+  expect(document.querySelector('#thread script')).toBeNull();
+  expect(document.querySelector('main')?.textContent).toContain('probablement été fermé');
 });

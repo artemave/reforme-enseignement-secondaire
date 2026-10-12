@@ -89,6 +89,8 @@ No mapping database, committed mapping file, or previous index is used during sy
 
 ## Bot comments and synchronisation
 
+Synchronisation cleans recognisable giscus-generated titles and duplicated headers into a readable title and quoted text. The hidden `sha1` lookup marker and document link are retained, so the widget keeps finding the same discussion. Authored titles and descriptions are preserved.
+
 Empty passages use a strict giscus lookup key that includes the publication timestamp, so a closed thread cannot reappear through the new-discussion form. Open discussions are embedded by their GitHub number.
 
 An open Discussion with other **open** Discussions mapped to the **exact same** target has one bot comment marked `<!-- document-annotations:v1 -->`, containing only an “Autres discussions” heading and links. Sharing a passage does not imply approval or resolution. If there are no peers, the item is unmatched, or it closes, existing annotation bot comments are removed and none are posted. Duplicate bot-owned annotation comments are removed. Human comments containing the marker are never treated as bot comments. GraphQL bot identities are normalised to the REST-style `[bot]` login so repeated rebuilds recognise the existing comment.

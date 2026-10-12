@@ -1,3 +1,4 @@
+import { renderHelp } from './help.js';
 import { passagePath, resolvePassage } from './routes.js';
 import { embedDiscussion } from './giscus.js';
 import DOMPurify from 'dompurify';
@@ -18,6 +19,16 @@ function link(root: Document, text: string, href: string): HTMLAnchorElement {
   return anchor;
 }
 
+/** Include nested headings; stop at the next heading of the same or higher level. */
+function sectionHtml(index: AnnotationIndex, target: Unit): string {
+  const start = index.units.findIndex((unit) => unit.id === target.id);
+  // The Markdown parser emits each heading unit as <hN>…</hN>.
+  const level = Number(target.html[2]);
+  const remaining = index.units.slice(start + 1);
+  const next = remaining.findIndex((unit) => unit.kind !== 'paragraph' && Number(unit.html[2]) <= level);
+  return target.html + (next === -1 ? remaining : remaining.slice(0, next)).map((unit) => unit.html).join('');
+}
+
 export function render(index: AnnotationIndex, root: Document, target?: Unit): void {
   const units = element<HTMLElement>(root, '#units');
   const contents = element<HTMLElement>(root, '#contents');
@@ -25,10 +36,10 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
   const annotations = index.annotations.filter((item) => item.kind === 'discussion');
   units.replaceChildren(); contents.replaceChildren();
   element<HTMLElement>(root, '.document-meta').hidden = target !== undefined;
-  element<HTMLAnchorElement>(root, '#repository').href = `https://github.com/${index.repository}`;
+  element<HTMLAnchorElement>(root, '#how-it-works').href = new URL('comment-ca-marche/', root.baseURI).href;
   element<HTMLElement>(root, '#updated').textContent = `Actualisé le ${new Intl.DateTimeFormat('fr', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(index.generatedAt))}`;
   const open = (unit: Unit): void => {
-    element<HTMLElement>(root, '#panel-title').textContent = unit.kind === 'paragraph' ? 'Discussion du passage' : unit.label;
+    element<HTMLElement>(root, '#panel-title').textContent = unit.kind === 'paragraph' ? 'Discussion du paragraphe' : unit.kind === 'section' ? 'Discussion de la section' : unit.label;
     const items = element<HTMLElement>(root, '#items'); items.replaceChildren();
     const matching = annotations.filter((item) => item.targetId === unit.id);
     const show = (selected: Annotation | Unit): void => {
@@ -52,7 +63,8 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
   for (const unit of index.units) {
     const row = root.createElement('section'); row.id = unit.id; row.className = `unit ${unit.kind}`;
     const passage = root.createElement(target === undefined ? 'div' : 'blockquote'); passage.className = 'passage';
-    passage.innerHTML = DOMPurify.sanitize(unit.html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style', 'form', 'input', 'button'], FORBID_ATTR: ['id', 'name'] });
+    const html = target?.id === unit.id && unit.kind === 'section' ? sectionHtml(index, unit) : unit.html;
+    passage.innerHTML = DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style', 'form', 'input', 'button'], FORBID_ATTR: ['id', 'name'] });
     for (const heading of passage.querySelectorAll('h2,h3,h4,h5,h6')) {
       const anchor = link(root, '', new URL(`./#${unit.id}`, root.baseURI).href);
       anchor.append(...heading.childNodes); heading.append(anchor);
@@ -61,7 +73,7 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
     const matching = annotations.filter((item) => item.targetId === unit.id);
     button.innerHTML = '<svg class="annotation-shape" viewBox="0 0 44 44" aria-hidden="true"><path d="M15 7H29Q38 7 38 16V27Q38 36 29 36H22L15 41V36Q6 36 6 27V16Q6 7 15 7Z" /></svg>';
     const label = root.createElement('span'); label.className = 'annotation-label';
-    label.textContent = matching.length === 0 ? '+' : String(matching.length); button.append(label);
+    label.textContent = matching.length === 0 ? '' : String(matching.length); button.append(label);
     button.classList.toggle('has-items', matching.length > 0);
     button.setAttribute('aria-label', `${String(matching.length)} échange(s) : ${unit.label}`);
     row.append(passage);
@@ -91,6 +103,10 @@ export async function load(root: Document, fetcher: Fetch = fetch): Promise<void
     if (!response.ok) throw new Error('Index unavailable');
     const index = indexSchema.parse(await response.json() as unknown);
     const base = new URL('.', root.baseURI).pathname;
+    if (new URL(root.URL).pathname === `${base}comment-ca-marche/`) {
+      renderHelp(index, root);
+      return;
+    }
     const route = resolvePassage(index, new URL(root.URL).pathname, base);
     if (route.redirect) root.defaultView?.history.replaceState(null, '', base);
     render(index, root, route.target);

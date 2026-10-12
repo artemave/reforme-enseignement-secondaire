@@ -68,6 +68,11 @@ export class Discussions {
     const type = id === undefined ? 'AddDiscussionCommentInput' : 'UpdateDiscussionCommentInput';
     z.object({ data: z.record(z.string(), z.unknown()) }).parse(await this.graphql(`mutation($input:${type}!){${mutation}(input:$input){comment{id}}}`, { input }));
   }
+  async writeDiscussion(number: number, title: string, body: string): Promise<void> {
+    await this.graphql('mutation($input:UpdateDiscussionInput!){updateDiscussion(input:$input){discussion{id}}}', {
+      input: { discussionId: z.string().parse(this.ids.get(number)), title, body },
+    });
+  }
   async deleteComment(id: number | string): Promise<void> {
     if (typeof id === 'number') { await this.github.deleteComment(id); return; }
     z.object({ data: z.record(z.string(), z.unknown()) }).parse(await this.graphql('mutation($input:DeleteDiscussionCommentInput!){deleteDiscussionComment(input:$input){clientMutationId}}', { input: { id } }));

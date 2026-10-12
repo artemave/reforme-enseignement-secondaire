@@ -10,6 +10,8 @@ export async function writePassagePages(siteUrl: string): Promise<void> {
   const html = original.replace('<head>', `<head><base href="${base}">`);
   await writeFile('dist/index.html', html);
   await writeFile('dist/404.html', html);
+  await mkdir('dist/comment-ca-marche', { recursive: true });
+  await writeFile('dist/comment-ca-marche/index.html', html);
   const incomplete = `dist/passage/${encodeURIComponent(index.revision)}`;
   await mkdir(incomplete, { recursive: true });
   await writeFile(`${incomplete}/index.html`, html);

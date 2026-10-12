@@ -1,16 +1,21 @@
+import { discussionPresentation } from './discussion-presentation.js';
 import { BOT_MARKER } from './matcher.js';
 import type { Annotation, AnnotationIndex, Item, Mapping, Unit, GiscusConfig } from './model.js';
 
 export type Match = (item: Item, units: Unit[]) => Promise<Mapping>;
 export interface SyncConfig { repository: string; branch: string; documentPath: string; revision: string; siteUrl: string; botLogin: string }
 
-export async function synchronise(github: { state(): Promise<Item[]>; writeComment(number: number, body: string, id?: number | string, kind?: Item['kind']): Promise<void>; deleteComment(id: number | string): Promise<void>; giscus?: GiscusConfig }, units: Unit[], config: SyncConfig, match: Match, now: string): Promise<AnnotationIndex> {
+export async function synchronise(github: { state(): Promise<Item[]>; writeDiscussion?(number: number, title: string, body: string): Promise<void>; writeComment(number: number, body: string, id?: number | string, kind?: Item['kind']): Promise<void>; deleteComment(id: number | string): Promise<void>; giscus?: GiscusConfig }, units: Unit[], config: SyncConfig, match: Match, now: string): Promise<AnnotationIndex> {
   const items = await github.state();
   const annotations: Annotation[] = [];
   // Compute everything before mutating GitHub. AI/API failures must not clear existing mappings.
   for (const item of items.filter((entry) => entry.open)) {
     const result = await match(item, units);
-    if (result.targetId !== null && units.some((unit) => unit.id === result.targetId)) annotations.push({ number: item.number, kind: item.kind, title: item.title, url: item.url, targetId: result.targetId });
+    if (result.targetId !== null && units.some((unit) => unit.id === result.targetId)) annotations.push({ number: item.number, kind: item.kind, title: discussionPresentation(item, units, config.revision)?.title ?? item.title, url: item.url, targetId: result.targetId });
+  }
+  for (const item of items) {
+    const presentation = discussionPresentation(item, units, config.revision);
+    if (presentation !== null) await github.writeDiscussion?.(item.number, presentation.title, presentation.body);
   }
   annotations.sort((a, b) => a.number - b.number);
   for (const item of items) {

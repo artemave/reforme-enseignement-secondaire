@@ -13,7 +13,12 @@ test('The reader fits the screen and its navigation, annotations and contributio
   await test.step('The document and section navigation fit the viewport', async () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.locator('.document-meta')).toBeVisible();
-    await expect(page.locator('.document-footer').getByRole('link', { name: 'Voir sur GitHub' })).toHaveAttribute('href', /\/__dev\/github\/development\/document-annotations$/u);
+    await activate(page.locator('.document-footer').getByRole('link', { name: 'Comment ça marche' }));
+    await expect(page.getByRole('heading', { name: 'Comment ça marche' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Voir le projet sur GitHub' })).toHaveAttribute('href', /\/__dev\/github\/development\/document-annotations$/u);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await activate(page.getByRole('link', { name: 'Revenir au document' }));
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Réforme');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const contents = page.getByRole('navigation', { name: 'Sommaire' });
     await expect(contents).not.toBeVisible();
@@ -80,9 +85,9 @@ test('The reader fits the screen and its navigation, annotations and contributio
     await expect(learning).toBeVisible();
   });
 
-  await test.step('The plus bubble opens its passage page with a local comment form', async () => {
+  await test.step('The empty comment bubble opens its passage page with a local comment form', async () => {
     const programs = page.getByRole('link', { name: /échange\(s\) : Les programmes doivent/u });
-    await expect(programs).toHaveText('+');
+    await expect(programs).toHaveText('');
     await activate(programs);
     await expect(page).toHaveURL(/\/passage\/[^/]+\/u-\d+\/$/u);
     await expect(discussions.locator('.contribute')).toHaveCount(0);
