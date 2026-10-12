@@ -69,10 +69,13 @@ jobs:
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
+          name: github-pages-${{ github.run_attempt }}
           path: dist
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
       - name: Preserve browser failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4

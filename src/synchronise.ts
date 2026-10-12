@@ -15,7 +15,14 @@ export async function synchronise(github: { state(): Promise<Item[]>; writeDiscu
   }
   for (const item of items) {
     const presentation = discussionPresentation(item, units, config.revision);
-    if (presentation !== null) await github.writeDiscussion?.(item.number, presentation.title, presentation.body);
+    if (presentation !== null) {
+      try {
+        await github.writeDiscussion?.(item.number, presentation.title, presentation.body);
+      } catch (error) {
+        // Cosmetic cleanup must not prevent fresh annotations from being published.
+        console.warn(`Could not simplify discussion #${String(item.number)}:`, error instanceof Error ? error.message : 'Unknown GitHub error');
+      }
+    }
   }
   annotations.sort((a, b) => a.number - b.number);
   for (const item of items) {

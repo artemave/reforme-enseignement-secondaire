@@ -22,7 +22,9 @@ export class Discussions {
     this.github = new GitHub(repository, token, fetcher);
   }
   async graphql(query: string, variables: Record<string, unknown>): Promise<unknown> {
-    return z.object({ data: z.record(z.string(), z.unknown()), errors: z.never().optional() }).parse(await request(this.fetcher, 'https://api.github.com/graphql', this.token, 'POST', { query, variables }));
+    const result = z.object({ data: z.record(z.string(), z.unknown()).nullable().optional(), errors: z.array(z.object({ message: z.string() })).optional() }).parse(await request(this.fetcher, 'https://api.github.com/graphql', this.token, 'POST', { query, variables }));
+    if (result.errors !== undefined && result.errors.length > 0) throw new Error(`GitHub GraphQL: ${result.errors.map((error) => error.message).join('; ')}`);
+    return z.object({ data: z.record(z.string(), z.unknown()) }).parse(result);
   }
   async nodes(id: string, type: string, field: string, fields: string): Promise<unknown[]> {
     const result: unknown[] = [];

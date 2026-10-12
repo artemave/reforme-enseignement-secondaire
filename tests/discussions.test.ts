@@ -15,7 +15,8 @@ describe('GitHub Discussions', () => {
     expect(await new Discussions('a/b', 'token', transport).nodes('D', 'Discussion', 'comments', 'id')).toEqual([1, 2]);
     expect(transport.mock.calls[1]?.[1]?.body).toContain('"cursor":"next"');
     await expect(new Discussions('a/b', 't', fetchQueue(connection([], true))).nodes('D', 'Discussion', 'comments', 'id')).rejects.toThrow('Missing discussion pagination cursor');
-    await expect(new Discussions('a/b', 't', fetchQueue({ data: {}, errors: [{ message: 'Denied' }] })).graphql('query', {})).rejects.toThrow();
+    await expect(new Discussions('a/b', 't', fetchQueue({ data: null, errors: [{ message: 'Denied' }] })).graphql('query', {})).rejects.toThrow('GitHub GraphQL: Denied');
+    await expect(new Discussions('a/b', 't', fetchQueue({ data: {}, errors: [] })).graphql('query', {})).resolves.toEqual({ data: {} });
   });
   it('fetches replies, original history and labels; retains closed discussions for comment reconciliation', async () => {
     const transport = fetchQueue(metadata, connection([post, { ...post, id: 'D_2', number: 2, closed: true }]),
