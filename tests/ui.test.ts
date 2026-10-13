@@ -15,7 +15,7 @@ function button(id: string) {
 }
 describe('static reader', () => {
   it('renders safe Markdown and contents with accessible annotation controls', () => {
-    render({ ...index, units: [unit, { ...unit, id: 'u-2', kind: 'section', label: 'Section', html: '<h2>Section</h2>' }, { ...unit, id: 'u-3', kind: 'paragraph', html: '<p id="spoof">Hello<script>alert(1)</script><img src="x" onerror="alert(1)"><a href="javascript:alert(1)">bad</a><style>body{display:none}</style></p>' }], annotations: [{ number: 1, kind: 'discussion', title: item.title, url: item.url, targetId: unit.id }, { number: 2, kind: 'pr', title: 'Proposal', url: 'https://github.com/a/b/pull/2', targetId: unit.id }] }, document);
+    render({ ...index, units: [unit, { ...unit, id: 'u-2', kind: 'section', label: 'Section', html: '<h2>Section</h2>' }, { ...unit, id: 'u-3', kind: 'paragraph', html: '<p id="spoof">Hello<script>alert(1)</script><img src="x" onerror="alert(1)"><a href="javascript:alert(1)">bad</a><style>body{display:none}</style></p>' }], annotations: [{ number: 1, kind: 'discussion', title: item.title, url: item.url, targetId: unit.id, comments: 2 }, { number: 2, kind: 'pr', title: 'Proposal', url: 'https://github.com/a/b/pull/2', targetId: unit.id, comments: 1 }] }, document);
     expect(document.querySelector('#contents')?.textContent).toBe('Section');
     expect(document.querySelector<HTMLAnchorElement>('#u-2 h2 a')?.href).toBe('http://localhost:3000/#u-2');
     expect(document.querySelector('#units script')).toBeNull();
@@ -23,7 +23,8 @@ describe('static reader', () => {
     expect(document.querySelector('#units [onerror]')).toBeNull();
     expect(document.querySelector('#spoof')).toBeNull();
     expect(document.querySelector('#u-3 .passage a')?.hasAttribute('href')).toBe(false);
-    expect(button('#u-1').textContent).toBe('1');
+    expect(button('#u-1').textContent).toBe('2');
+    expect(button('#u-1').getAttribute('aria-label')).toBe(`2 échange(s) : ${unit.label}`);
     expect(document.querySelector<HTMLElement>('.document-meta')?.hidden).toBe(false);
     expect(button('#u-3').textContent).toBe('');
     expect(button('#u-1').href).toBe('http://localhost:3000/#annotations');
@@ -37,7 +38,7 @@ describe('static reader', () => {
   });
   it('quotes the selected passage once, with selectable embedded discussions', () => {
     const paragraph = { ...unit, id: 'u-2', kind: 'paragraph' as const };
-    const configured = { ...index, units: [unit, paragraph], giscus: { repositoryId: 'repo', categoryId: 'cat', category: 'General', categorySlug: 'general', clientUrl: 'https://giscus.app/client.js' }, annotations: [3, 4].map((number) => ({ number, kind: 'discussion' as const, title: `Question ${String(number)}`, url: `https://github.com/a/b/discussions/${String(number)}`, targetId: paragraph.id })) };
+    const configured = { ...index, units: [unit, paragraph], giscus: { repositoryId: 'repo', categoryId: 'cat', category: 'General', categorySlug: 'general', clientUrl: 'https://giscus.app/client.js' }, annotations: [3, 4].map((number) => ({ number, kind: 'discussion' as const, title: `Question ${String(number)}`, url: `https://github.com/a/b/discussions/${String(number)}`, targetId: paragraph.id, comments: 1 })) };
     render(configured, document, paragraph);
     expect(document.querySelectorAll('.unit')).toHaveLength(1);
     expect(document.querySelector<HTMLElement>('.document-meta')?.hidden).toBe(true);

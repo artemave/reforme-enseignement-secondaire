@@ -45,7 +45,7 @@ it('opening and closing a passage-linked discussion publishes and removes its an
 
     const opened = await published();
     expect(opened.annotations).toEqual([...before.annotations, {
-      number, kind: 'discussion', title, targetId: passage.id,
+      number, kind: 'discussion', title, targetId: passage.id, comments: 0,
       url: `https://github.com/${before.repository}/discussions/${String(number)}`,
     }]);
     const issue = (await github.state()).find((item) => item.number === number);

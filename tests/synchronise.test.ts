@@ -20,6 +20,16 @@ describe('synchronisation', () => {
     expect(github.writeComment.mock.calls[0]?.[1]).not.toContain('revision');
     expect(github.writeComment.mock.calls[0]?.[1]).not.toContain('resolution');
   });
+  it('counts comments and replies by people, excluding peer-link bot comments', async () => {
+    const github = api([{ ...item, comments: [
+      { id: 1, body: 'Question', login: 'reader' },
+      { id: 2, body: 'Reply', login: 'author' },
+      { id: 3, body: BOT_MARKER, login: config.botLogin },
+      { id: 4, body: BOT_MARKER, login: 'reader' },
+    ] }]);
+    const result = await synchronise(github, [unit], config, () => Promise.resolve(matched), now);
+    expect(result.annotations[0]?.comments).toBe(3);
+  });
   it('updates changed bot comments, removes duplicates, preserves human spoofed markers and leaves unchanged comments alone', async () => {
     const peer = { ...item, number: 2 };
     const github = api([item, peer]);

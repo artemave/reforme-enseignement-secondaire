@@ -8,7 +8,7 @@ export type Unit = z.infer<typeof unitSchema>;
 export const annotationSchema = z.object({
   number: z.number().int().positive(), kind: z.enum(['issue', 'pr', 'discussion']),
   title: z.string(), url: z.url().regex(/^https:\/\/github\.com\//u),
-  targetId: z.string(),
+  targetId: z.string(), comments: z.number().int().nonnegative(),
 });
 export type Annotation = z.infer<typeof annotationSchema>;
 export const giscusSchema = z.object({ repositoryId: z.string(), categoryId: z.string(), category: z.string(), categorySlug: z.string(), clientUrl: z.string().default('https://giscus.app/client.js') });

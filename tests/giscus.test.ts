@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { embedDiscussion } from '../src/giscus.js';
 import { index, unit } from './fixtures.js';
-const annotation = { number: 3, kind: 'discussion' as const, title: 'Question', url: 'https://github.com/a/b/discussions/3', targetId: 'u-1' };
+const annotation = { number: 3, kind: 'discussion' as const, title: 'Question', url: 'https://github.com/a/b/discussions/3', targetId: 'u-1', comments: 0 };
 it('loads a specific discussion with public IDs and replaces the previous widget; other items retain GitHub links', () => {
   const container = document.createElement('div');
   embedDiscussion(index, annotation, document, container);

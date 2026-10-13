@@ -1,5 +1,5 @@
 import { discussionPresentation } from './discussion-presentation.js';
-import { BOT_MARKER } from './matcher.js';
+import { BOT_MARKER, humanComments } from './matcher.js';
 import type { Annotation, AnnotationIndex, Item, Mapping, Unit, GiscusConfig } from './model.js';
 
 export type Match = (item: Item, units: Unit[]) => Promise<Mapping>;
@@ -11,7 +11,7 @@ export async function synchronise(github: { state(): Promise<Item[]>; writeDiscu
   // Compute everything before mutating GitHub. AI/API failures must not clear existing mappings.
   for (const item of items.filter((entry) => entry.open)) {
     const result = await match(item, units);
-    if (result.targetId !== null && units.some((unit) => unit.id === result.targetId)) annotations.push({ number: item.number, kind: item.kind, title: discussionPresentation(item, units, config.revision)?.title ?? item.title, url: item.url, targetId: result.targetId });
+    if (result.targetId !== null && units.some((unit) => unit.id === result.targetId)) annotations.push({ number: item.number, kind: item.kind, title: discussionPresentation(item, units, config.revision)?.title ?? item.title, url: item.url, targetId: result.targetId, comments: humanComments(item, config.botLogin).length });
   }
   for (const item of items) {
     const presentation = discussionPresentation(item, units, config.revision);

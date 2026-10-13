@@ -79,9 +79,10 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
     const matching = annotations.filter((item) => item.targetId === unit.id);
     button.innerHTML = '<svg class="annotation-shape" viewBox="0 0 44 44" aria-hidden="true"><path d="M15 7H29Q38 7 38 16V27Q38 36 29 36H22L15 41V36Q6 36 6 27V16Q6 7 15 7Z" /></svg>';
     const label = root.createElement('span'); label.className = 'annotation-label';
-    label.textContent = matching.length === 0 ? '' : String(matching.length); button.append(label);
+    const comments = matching.reduce((total, item) => total + item.comments, 0);
+    label.textContent = comments === 0 ? '' : String(comments); button.append(label);
     button.classList.toggle('has-items', matching.length > 0);
-    button.setAttribute('aria-label', `${String(matching.length)} échange(s) : ${unit.label}`);
+    button.setAttribute('aria-label', `${String(comments)} échange(s) : ${unit.label}`);
     row.append(passage);
     if (target === undefined) row.prepend(button);
     if (target === undefined || unit.id === target.id) units.append(row);

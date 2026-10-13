@@ -33,7 +33,7 @@ export function seedItems(markdown: string): FixtureItem[] {
   return [
     make(1, 'Clarifier le périmètre de la réforme', title),
     make(2, 'Comment relier les matières dans les programmes ?', section),
-    { ...make(3, 'Comment préserver la curiosité des élèves ?', learning), comments: [{ id: 31, login: 'camille', body: 'Des projets concrets pourraient aider à illustrer cette ambition.' }] },
+    { ...make(3, 'Comment préserver la curiosité des élèves ?', learning), comments: [{ id: 31, login: 'camille', body: 'Des projets concrets pourraient aider à illustrer cette ambition.' }, { id: 32, login: 'sacha', body: 'Les sorties scolaires aussi.' }] },
     make(4, 'Comment développer le jugement des élèves ?', learning), historical,
     make(6, 'Question générale sur le calendrier'),
     { ...make(7, 'Ancienne discussion sur les objectifs', learning), open: false },

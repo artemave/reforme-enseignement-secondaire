@@ -46,7 +46,7 @@ it('activates a prerendered document without a discussion target', async () => {
 
 it('refreshes stale published annotations without relying on a cached HTML index', async () => {
   const dom = new JSDOM(renderStaticHtml(template, configured, 'http://localhost:3000/repo/'), { url: 'http://localhost:3000/repo/' });
-  const current = { ...configured, annotations: [{ number: 7, kind: 'discussion' as const, title: 'New discussion', url: 'https://github.com/a/b/discussions/7', targetId: paragraph.id }] };
+  const current = { ...configured, annotations: [{ number: 7, kind: 'discussion' as const, title: 'New discussion', url: 'https://github.com/a/b/discussions/7', targetId: paragraph.id, comments: 1 }] };
   await load(dom.window.document, fetchQueue(current));
   expect(dom.window.document.querySelector('#u-2 .annotation-label')?.textContent).toBe('1');
   dom.window.close();

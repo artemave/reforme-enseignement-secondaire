@@ -9,6 +9,10 @@ const mapping = z.object({ targetId: z.string().nullable(), confidence: z.number
 const completion = z.object({ choices: z.array(z.object({ message: z.object({ content: z.string().nullable() }) })) });
 export interface AIConfig { token: string; endpoint: string; model: string }
 
+export function humanComments(item: Item, botLogin: string): Item['comments'] {
+  return item.comments.filter((c) => !(c.login === botLogin && c.body.startsWith(BOT_MARKER)));
+}
+
 export async function matchItem(item: Item, units: Unit[], config: AIConfig, botLogin: string, fetcher: Fetch = fetch): Promise<Mapping> {
   const input = {
     currentDocument: units.map(({ id, markdown, kind, context }) => ({ id, markdown, kind, context })),
@@ -16,7 +20,7 @@ export async function matchItem(item: Item, units: Unit[], config: AIConfig, bot
       originalDescription: originalDescription(item.body, item.edits, item.includesCreatedEdit, item.lastEditedAt),
       // Retain all available historical descriptions as additional matching context.
       descriptionEditHistory: item.edits, labels: item.labels,
-      comments: item.comments.filter((c) => !(c.login === botLogin && c.body.startsWith(BOT_MARKER))).map((c) => c.body),
+      comments: humanComments(item, botLogin).map((c) => c.body),
       reviews: item.discussion, diff: item.diff },
   };
   const response = completion.parse(await request(fetcher, config.endpoint, config.token, 'POST', {
