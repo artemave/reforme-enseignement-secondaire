@@ -102,6 +102,8 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
     back.prepend(chevron);
     units.before(back, element<HTMLElement>(root, '#panel-title'));
     root.title = `${target.label} — Document`;
+    // giscus copies the page description into each new Discussion's body.
+    element<HTMLMetaElement>(root, 'meta[name="description"]').content = target.markdown;
   }
 }
 

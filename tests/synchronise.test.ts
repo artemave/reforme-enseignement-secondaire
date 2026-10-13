@@ -74,18 +74,3 @@ describe('synchronisation', () => {
     expect(github.writeComment).not.toHaveBeenCalled();
   });
 });
-
-it.each([
-  { error: new Error('GitHub denied the edit'), message: 'GitHub denied the edit' },
-  { error: 'unexpected failure', message: 'Unknown GitHub error' },
-])('publishes annotations and cross-references when cosmetic discussion cleanup fails: $message', async ({ error, message }) => {
-  const title = `${'a'.repeat(64)}/u-1: Title`;
-  const generated = { ...item, kind: 'discussion' as const, title, body: `# ${title}\n\n<!-- sha1: retained -->` };
-  const github = { ...api([generated, { ...item, kind: 'discussion' as const, number: 2 }]), writeDiscussion: vi.fn().mockRejectedValue(error) };
-  const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-  const result = await synchronise(github, [unit], config, () => Promise.resolve(matched), now);
-  expect(result.annotations[0]?.title).toBe('Discussion : Title');
-  expect(github.writeComment).toHaveBeenCalledTimes(2);
-  expect(warning).toHaveBeenCalledWith('Could not simplify discussion #1:', message);
-  warning.mockRestore();
-});

@@ -106,14 +106,6 @@ export class FakeGitHub {
     if (query.includes('discussionCategories')) return json({ data: { repository: { id: 'fixture-repository', discussionCategories: { nodes: [{ id: 'fixture-category', name: 'General', slug: 'general' }] } } } });
     if (query.startsWith('mutation')) {
       const input = z.record(z.string(), z.unknown()).parse(variables['input']);
-      if (query.includes('updateDiscussion(')) {
-        const number = Number(z.string().parse(input['discussionId']).slice(2));
-        const title = z.string().parse(input['title']);
-        const body = z.string().parse(input['body']);
-        this.edit(number, title, body);
-        this.writes.push({ method: 'PATCH', path: `/discussions/${String(number)}`, body });
-        return json({ data: { updateDiscussion: { discussion: { id: `D_${String(number)}` } } } });
-      }
       if (query.includes('addDiscussionComment(')) {
         const item = this.item(Number(z.string().parse(input['discussionId']).slice(2)));
         const body = z.string().parse(input['body']);

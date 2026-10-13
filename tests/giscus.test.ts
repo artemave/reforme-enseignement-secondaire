@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { embedDiscussion } from '../src/giscus.js';
+import { discussionTerm, embedDiscussion } from '../src/giscus.js';
 import { index, unit } from './fixtures.js';
 const annotation = { number: 3, kind: 'discussion' as const, title: 'Question', url: 'https://github.com/a/b/discussions/3', targetId: 'u-1', comments: 0 };
 it('loads a specific discussion with public IDs and replaces the previous widget; other items retain GitHub links', () => {
@@ -18,7 +18,7 @@ it('loads a specific discussion with public IDs and replaces the previous widget
   expect(container.children).toHaveLength(1);
   embedDiscussion(configured, unit, document, container);
   expect(container.querySelector('script')?.getAttribute('data-mapping')).toBe('specific');
-  expect(container.querySelector('script')?.getAttribute('data-term')).toBe(`hash/u-1: # Title (${index.generatedAt})`);
+  expect(container.querySelector('script')?.getAttribute('data-term')).toMatch(/^Discussion : Title · [0-9a-f]{8}$/u);
   expect(container.querySelector('script')?.getAttribute('data-strict')).toBe('1');
   embedDiscussion(configured, { ...annotation, kind: 'pr' }, document, container);
   expect(container.children).toHaveLength(0);
@@ -37,4 +37,11 @@ it('starts a fresh thread after republication while retaining open discussions b
   expect(container.querySelector('script')?.getAttribute('data-term')).toBe('3');
   embedDiscussion(republished, annotation, document, container);
   expect(container.querySelector('script')?.getAttribute('data-term')).toBe('3');
+});
+
+it('titles new discussions with the passage label, marking truncated paragraphs', () => {
+  const paragraph = { ...unit, id: 'u-2', kind: 'paragraph' as const, label: 'Khanmigo, développé par', markdown: 'Khanmigo, développé par Khan Academy.' };
+  expect(discussionTerm(index, paragraph)).toMatch(/^Discussion : Khanmigo, développé par… · [0-9a-f]{8}$/u);
+  expect(discussionTerm(index, { ...paragraph, markdown: paragraph.label })).toMatch(/^Discussion : Khanmigo, développé par · [0-9a-f]{8}$/u);
+  expect(discussionTerm(index, paragraph)).not.toBe(discussionTerm(index, { ...paragraph, id: 'u-3' }));
 });

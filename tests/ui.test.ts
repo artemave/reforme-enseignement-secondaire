@@ -61,7 +61,11 @@ describe('static reader', () => {
   });
   it('offers a new discussion on an empty passage page and handles an empty document', () => {
     const paragraph = { ...unit, id: 'u-2', kind: 'paragraph' as const };
+    const description = document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content;
+    render({ ...index, units: [unit, paragraph] }, document);
+    expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content).toBe(description);
     render({ ...index, units: [unit, paragraph] }, document, paragraph);
+    expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content).toBe(paragraph.markdown);
     expect(document.querySelector('#panel-title')?.textContent).toBe('Discussion du paragraphe');
     expect(document.querySelector('#items')?.textContent).toBe('');
     expect(document.querySelector('#new-discussion')).toBeNull();

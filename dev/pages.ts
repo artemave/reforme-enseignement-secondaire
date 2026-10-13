@@ -2,6 +2,7 @@ import { fixtureRepository } from './scenario.js';
 import type { FixtureItem } from './scenario.js';
 import type { FixtureWorkspace } from './workspace.js';
 import { fixtureHref } from './links.js';
+import { discussionTerm } from '../src/giscus.js';
 
 export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/gu, (character) => `&#${String(character.charCodeAt(0))};`);
@@ -43,8 +44,9 @@ export function threadPage(workspace: FixtureWorkspace, params: URLSearchParams)
   const number = params.get('number');
   const item = number === null ? undefined : workspace.backend.item(Number(number));
   const comments = item?.comments.filter((comment) => comment.login !== 'github-actions[bot]') ?? [];
+  const target = workspace.index.units.find((unit) => discussionTerm(workspace.index, unit) === params.get('term'));
   const content = item === undefined
-    ? `${hidden('targetId', params.get('target') ?? '')}${hidden('revision', params.get('revision') ?? '')}`
+    ? `${hidden('targetId', target?.id ?? '')}${hidden('revision', workspace.index.revision)}`
     : hidden('number', String(item.number));
   return `<!doctype html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:inherit}body{margin:0;padding:0;font:16px/1.6 system-ui,sans-serif}textarea{box-sizing:border-box;width:100%;min-height:100px;font:inherit;padding:12px;border:1px solid #719bb5;border-radius:6px;background:transparent;color:inherit}button{font:inherit;padding:10px 16px;background:#255d82;color:white;border:0;border-radius:6px;cursor:pointer}article{border-bottom:1px solid #719bb5;padding:12px 0}p{white-space:pre-wrap;overflow-wrap:anywhere}a{color:#719bb5}label{display:block}</style></head><body>${item === undefined ? '' : `<a href="${itemPath(item)}" target="_parent">Discussion #${String(item.number)} sur GitHub</a>`}${form(item === undefined ? 'start-discussion' : 'comment', `${content}<label for="comment">Commentaire</label><textarea id="comment" name="body" required></textarea><button>Ajouter le commentaire</button>`)}${comments.map((comment) => `<article><strong>${escapeHtml(comment.login)}</strong><p>${escapeHtml(comment.body)}</p></article>`).join('')}</body></html>`;
 }

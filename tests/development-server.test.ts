@@ -8,6 +8,7 @@ import { FixtureWorkspace } from '../dev/workspace.js';
 import { fixtureRepository } from '../dev/scenario.js';
 import { middleware, route } from '../dev/server.js';
 import { dashboard, createPage, errorPage, escapeHtml, itemPage, linkedText } from '../dev/pages.js';
+import { discussionTerm } from '../src/giscus.js';
 import { createLogger, createServer as createViteServer } from 'vite';
 import viteConfig from '../vite.config.js';
 const markdown = await readFile('dev/fixtures/document.md', 'utf8');
@@ -37,7 +38,9 @@ describe('development-only pages and routes', () => {
     const prefix = `/__dev/github/${fixtureRepository}`;
     const emptyThread = await route(workspace, 'GET', url('/__dev/giscus/thread'), {});
     expect(emptyThread?.body).toContain('start-discussion');
-    expect((await route(workspace, 'GET', url('/__dev/giscus/thread?target=u-8&revision=current'), {}))?.body).toContain('value="u-8"');
+    const passage = workspace.index.units.find((unit) => unit.id === 'u-8');
+    if (passage === undefined) throw new Error('Missing fixture passage');
+    expect((await route(workspace, 'GET', url(`/__dev/giscus/thread?term=${encodeURIComponent(discussionTerm(workspace.index, passage))}`), {}))?.body).toContain('value="u-8"');
     workspace.backend.item(3).comments.push({ id: 987, login: 'reader', body: '<comment>' });
     const existingThread = await route(workspace, 'GET', url('/__dev/giscus/thread?number=3'), {});
     expect(existingThread?.body).toContain('&#60;comment&#62;');
