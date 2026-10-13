@@ -1,12 +1,22 @@
 // Temporary diagnostics for iOS back-navigation scroll loss.
-// Visit any page with ?debug-scroll to enable, ?debug-scroll=off to disable.
+// Visit any page with ?debug-scroll or ?no-giscus to enable, =off to disable.
 (() => {
-  const flag = new URL(location.href).searchParams.get('debug-scroll');
-  try {
-    if (flag === 'off') localStorage.removeItem('debug-scroll');
-    else if (flag !== null) localStorage.setItem('debug-scroll', '1');
-    if (localStorage.getItem('debug-scroll') === null) return;
-  } catch { return; }
+  const toggle = (name) => {
+    const flag = new URL(location.href).searchParams.get(name);
+    try {
+      if (flag === 'off') localStorage.removeItem(name);
+      else if (flag !== null) localStorage.setItem(name, '1');
+      return localStorage.getItem(name) !== null;
+    } catch { return false; }
+  };
+  const noGiscus = toggle('no-giscus');
+  if (noGiscus) {
+    const append = Element.prototype.append;
+    Element.prototype.append = function (...nodes) {
+      append.apply(this, nodes.filter((node) => !(node instanceof HTMLScriptElement && node.src.startsWith('https://giscus.app/'))));
+    };
+  }
+  if (!toggle('debug-scroll')) return;
 
   const key = 'debug-scroll-log';
   const start = performance.now();
@@ -34,7 +44,7 @@
   };
 
   const navigation = performance.getEntriesByType('navigation')[0];
-  log(`start nav=${navigation?.type} restoration=${history.scrollRestoration} y=${scrollY} len=${history.length} state=${JSON.stringify(history.state)}`);
+  log(`start giscus=${noGiscus ? 'off' : 'on'} nav=${navigation?.type} restoration=${history.scrollRestoration} y=${scrollY} len=${history.length} state=${JSON.stringify(history.state)}`);
   log(`url=${location.pathname.slice(-30)}${location.hash} ref=${document.referrer.slice(-30)}`);
   watch('boot');
 
