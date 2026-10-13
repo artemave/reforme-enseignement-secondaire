@@ -15,3 +15,6 @@
 :root[data-theme="light"]{color-scheme:light}.footer-controls{display:flex;align-items:center;justify-content:space-between;gap:12px}.theme-toggle{width:44px;height:44px;align-self:start;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--text);font-size:24px}.theme-toggle:hover{background:var(--hover)}
 
 .help-page{font-size:16px;line-height:1.7}.help-page h1{font-size:28px;margin:28px 0 16px}.help-page h2{font-size:18px;margin:24px 0 6px}.help-page p{margin:0 0 12px}
+
+/* giscus declares color-scheme "light dark"; a different scheme on the iframe makes browsers paint an opaque backdrop behind it. */
+.giscus iframe{color-scheme:light dark}

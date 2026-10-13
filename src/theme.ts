@@ -14,7 +14,6 @@ export function installTheme(root: Document, browser: Pick<Window, 'localStorage
     button.textContent = dark ? '☀' : '☾';
     button.setAttribute('aria-label', dark ? 'Activer le mode clair' : 'Activer le mode sombre');
     for (const frame of root.querySelectorAll<HTMLIFrameElement>('iframe')) {
-      frame.style.colorScheme = mode;
       frame.contentWindow?.postMessage({ giscus: { setConfig: { theme: mode } } }, new URL(frame.src, root.baseURI).origin);
     }
   };
