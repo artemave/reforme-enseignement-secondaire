@@ -24,6 +24,7 @@
   try { lines = JSON.parse(sessionStorage.getItem(key) ?? '[]'); } catch { /* fresh log */ }
   let panel = null;
   const height = () => document.documentElement.scrollHeight;
+  const focused = () => { const e = document.activeElement; return e === null ? 'none' : `${e.tagName.toLowerCase()}${e.id === '' ? '' : `#${e.id}`}`; };
   const log = (text) => {
     const page = location.pathname.includes('/passage/') ? 'P' : 'R';
     lines.push(`${page} ${String(Math.round(performance.now() - start)).padStart(5)} ${text}`);
@@ -58,10 +59,10 @@
   });
   addEventListener('load', () => { log(`load y=${scrollY} h=${height()}`); });
   addEventListener('pageshow', (event) => {
-    log(`pageshow persisted=${event.persisted} y=${scrollY} h=${height()} restoration=${history.scrollRestoration}`);
+    log(`pageshow persisted=${event.persisted} focus=${focused()} y=${scrollY} h=${height()} restoration=${history.scrollRestoration}`);
     if (event.persisted) watch('bfcache');
   });
-  addEventListener('pagehide', (event) => { log(`pagehide persisted=${event.persisted} y=${scrollY}`); });
+  addEventListener('pagehide', (event) => { log(`pagehide persisted=${event.persisted} focus=${focused()} y=${scrollY}`); });
   addEventListener('popstate', () => { log(`popstate y=${scrollY}`); });
   addEventListener('hashchange', () => { log(`hashchange ${location.hash} y=${scrollY}`); });
   addEventListener('click', (event) => {
