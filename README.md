@@ -97,7 +97,7 @@ An open Discussion with other **open** Discussions mapped to the **exact same** 
 
 All AI mappings are computed before any comments are written. An AI refusal, invalid response or GitHub error fails the run and leaves the last published site intact. Once mappings succeed, comment bodies are compared before creating/updating; unchanged comments are left alone. A subsequent run reconciles partial comment-write failures.
 
-Publication responds to default-branch pushes (including site/config/workflow changes), Discussion lifecycle and metadata events, Discussion comments, labels/milestones, releases, external `repository_dispatch`, external Pages builds, and manual rebuilds. A six-hour scheduled rebuild reconciles missed events, API-only history changes, and other metadata changes without their own Actions event.
+Publication responds to default-branch pushes (including site/config/workflow changes) once the Quality workflow has passed for them, Discussion lifecycle and metadata events, Discussion comments, labels/milestones, releases, external `repository_dispatch`, external Pages builds, and manual rebuilds. A six-hour scheduled rebuild reconciles missed events, API-only history changes, and other metadata changes without their own Actions event.
 
 The publisher always checks out the current default branch and fetches current state. It never executes PR code or downloads PR-produced artifacts. The ordinary quality workflow tests PR code without secrets or write permissions.
 
@@ -105,7 +105,7 @@ A single `document-pages` concurrency group serialises complete synchronisation/
 
 ## Quality gates
 
-Both CI and publication install Chrome and execute `npm run check`, including all tests, before building:
+The Quality workflow installs Chrome and WebKit and executes `npm run check`, including all tests, on every push and pull request. Publication does not repeat these checks; a default-branch push deploys only after Quality succeeds:
 
 - TypeScript `strict`, unchecked-index protection, exact optional properties, exhaustive-switch linting, unused-code checks, and full dependency type checking (`skipLibCheck: false`).
 - ESLint's strict type-aware and stylistic configurations, strict boolean expressions, unsafe-value protection, mandatory type imports, and zero allowed warnings. One documented DOM-selector generic exception preserves typed required-element lookups.
