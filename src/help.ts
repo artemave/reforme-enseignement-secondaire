@@ -1,4 +1,4 @@
-import { preserveDocumentScroll } from './navigation.js';
+import { navigateBack } from './navigation.js';
 import type { AnnotationIndex } from './model.js';
 
 export function renderHelp(index: AnnotationIndex, root: Document): void {
@@ -18,7 +18,7 @@ export function renderHelp(index: AnnotationIndex, root: Document): void {
   back.href = './';
   back.dataset['documentBack'] = '';
   back.innerHTML = '<span class="back-chevron" aria-hidden="true">‹</span>Revenir au document';
-  preserveDocumentScroll(root, back);
+  navigateBack(root, back);
   main.prepend(back);
   const repository = root.createElement('a');
   repository.id = 'repository';

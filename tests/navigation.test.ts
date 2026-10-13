@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { preserveDocumentScroll } from '../src/navigation.js';
+import { navigateBack } from '../src/navigation.js';
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); history.replaceState(null, '', '/'); document.body.replaceChildren(); });
 function setup(referrer: string, length = 2) {
@@ -7,7 +7,7 @@ function setup(referrer: string, length = 2) {
   vi.spyOn(history, 'length', 'get').mockReturnValue(length);
   const back = vi.spyOn(history, 'back').mockImplementation(() => undefined);
   const link = document.createElement('a'); link.href = '#fallback';
-  preserveDocumentScroll(document, link);
+  navigateBack(document, link);
   return { link, back };
 }
 it('returns through history when the document was the previous page', () => {
@@ -35,6 +35,6 @@ it.each([
 it('supports rendering into a detached document', () => {
   const root = document.implementation.createHTMLDocument();
   const link = root.createElement('a');
-  preserveDocumentScroll(root, link);
+  navigateBack(root, link);
   expect(link.dispatchEvent(new MouseEvent('click', { cancelable: true }))).toBe(true);
 });

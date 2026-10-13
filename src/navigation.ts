@@ -1,5 +1,5 @@
-/** Returning through history lets the browser restore the document's scroll position. */
-export function preserveDocumentScroll(root: Document, link: HTMLAnchorElement): void {
+/** Use browser Back for ordinary return-link clicks when the referrer is the document. */
+export function navigateBack(root: Document, link: HTMLAnchorElement): void {
   const browser = root.defaultView;
   if (browser === null || root.referrer === '' || browser.history.length < 2) return;
   const previous = new URL(root.referrer);

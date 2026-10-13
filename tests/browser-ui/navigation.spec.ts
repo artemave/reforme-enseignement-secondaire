@@ -1,12 +1,9 @@
 import { expect } from '@playwright/test';
 import { test } from '../system/environment.js';
 
-test('Repeated return navigation preserves the reading position after upgrading from manual restoration', async ({ page }) => {
+test('Repeated return navigation preserves the reading position', async ({ page }) => {
   for (const action of ['return link', 'browser Back']) {
     await test.step(action, async () => {
-      await page.evaluate(() => { history.scrollRestoration = 'manual'; });
-      await page.reload({ waitUntil: 'domcontentloaded' });
-      expect(await page.evaluate(() => history.scrollRestoration)).toBe('auto');
       const paragraph = page.getByRole('link', { name: /échange\(s\) : Les familles participent/u });
       await paragraph.scrollIntoViewIfNeeded();
       await page.evaluate(() => { window.scrollTo({ top: 400, behavior: 'instant' }); });

@@ -1,4 +1,4 @@
-import { preserveDocumentScroll } from './navigation.js';
+import { navigateBack } from './navigation.js';
 import { renderHelp } from './help.js';
 import { passagePath, resolvePassage } from './routes.js';
 import { embedDiscussion } from './giscus.js';
@@ -95,7 +95,7 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
   if (target !== undefined) {
     const back = link(root, 'Revenir au document', new URL(`./#${target.id}`, root.baseURI).href);
     back.dataset['documentBack'] = '';
-    preserveDocumentScroll(root, back);
+    navigateBack(root, back);
     const chevron = root.createElement('span'); chevron.className = 'back-chevron';
     chevron.textContent = '‹'; chevron.setAttribute('aria-hidden', 'true');
     back.prepend(chevron);
@@ -108,7 +108,7 @@ export async function load(root: Document, fetcher: Fetch = fetch): Promise<void
   try {
     // This URL stays the same across publications; never reuse a previous index.
     // Back navigation is available immediately, before the freshness request finishes.
-    root.querySelectorAll<HTMLAnchorElement>('[data-document-back]').forEach((back) => { preserveDocumentScroll(root, back); });
+    root.querySelectorAll<HTMLAnchorElement>('[data-document-back]').forEach((back) => { navigateBack(root, back); });
     const embedded = root.querySelector('#annotation-index');
     const response = await fetcher('./annotations.json', { cache: 'no-store' });
     if (!response.ok) throw new Error('Index unavailable');
