@@ -69,7 +69,7 @@ Do not put secrets in tracked files. Other environment options: `DOCUMENT_PATH` 
 
 ## Reader behaviour
 
-Each title, heading, and top-level Markdown block has a target and an accessible annotation control. Lists, tables, blockquotes and fenced code blocks are kept intact as block targets. A number counts the comments and replies in the open Discussions mapped to that target, excluding the bot’s “Autres discussions” comments. Both numbered bubbles and `+` links navigate directly to the passage’s discussion page. The document title links to its discussion area on the root page. Empty passages show the giscus comment form; posting the first comment creates the Discussion.
+Each title, heading, and top-level Markdown block has a target and an accessible annotation control. Lists, tables, blockquotes and fenced code blocks are kept intact as block targets. A number counts the comments and replies in the open Discussions mapped to that target, excluding the bot’s “Autres discussions” comments. Both numbered and empty bubbles navigate directly to the passage’s discussion page. The document title links to its discussion area on the root page. Empty passages show the giscus comment form; posting the first comment creates the Discussion.
 
 Every target embeds its existing GitHub Discussion, or shows a comment form that creates one on the first comment in the General category. New thread titles contain the document revision, target ID and a passage excerpt, providing context for matching.
 

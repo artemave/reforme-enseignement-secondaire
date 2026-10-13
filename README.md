@@ -15,7 +15,7 @@ Il propose de conserver les programmes, les établissements et les enseignants, 
 Chaque section et chaque paragraphe du document a sa propre discussion :
 
 - **Lire** — aucun compte n'est nécessaire.
-- **Commenter** — touchez la bulle à côté d'un passage (`+` s'il n'a pas encore de discussion, sinon le nombre de commentaires). Connectez-vous à GitHub et autorisez giscus, puis écrivez votre commentaire. Le premier commentaire sur un passage ouvre sa discussion.
+- **Commenter** — touchez la bulle à côté d'un passage ; elle affiche le nombre de commentaires, ou reste vide s'il n'y en a pas encore. Connectez-vous à GitHub et autorisez giscus, puis écrivez votre commentaire. Le premier commentaire sur un passage ouvre sa discussion.
 - **Partager** — chaque passage a sa propre page, dont vous pouvez copier le lien.
 - **Suivre** — utilisez « Subscribe » sur la page GitHub d'une discussion pour être notifié des réponses.
 
