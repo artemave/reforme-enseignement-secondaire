@@ -12,5 +12,6 @@ export default tseslint.config(
     '@typescript-eslint/strict-boolean-expressions': 'error',
     '@typescript-eslint/switch-exhaustiveness-check': 'error'
   } },
-  { files: ['**/*.js'], ...tseslint.configs.disableTypeChecked, languageOptions: { globals: globals.node } }
+  { files: ['**/*.js'], ...tseslint.configs.disableTypeChecked, languageOptions: { globals: globals.node } },
+  { files: ['public/**/*.js'], languageOptions: { globals: globals.browser } }
 );
