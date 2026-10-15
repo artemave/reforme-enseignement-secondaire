@@ -26,12 +26,14 @@ describe('static reader', () => {
     expect(button('#u-1').textContent).toBe('2');
     expect(button('#u-1').getAttribute('aria-label')).toBe(`2 échange(s) : ${unit.label}`);
     expect(document.querySelector<HTMLElement>('.document-meta')?.hidden).toBe(false);
+    expect(document.querySelector<HTMLElement>('.invitation')?.hidden).toBe(false);
+    expect(document.querySelector<HTMLAnchorElement>('#invitation-help')?.href).toBe('http://localhost:3000/comment-ca-marche/');
     expect(button('#u-3').textContent).toBe('');
     expect(button('#u-1').href).toBe('http://localhost:3000/#annotations');
     expect(button('#u-3').href).toBe('http://localhost:3000/passage/hash/u-3/');
     expect(button('#u-1').getAttribute('aria-haspopup')).toBeNull();
     expect(document.querySelector<HTMLElement>('#items')?.hidden).toBe(true);
-    expect(document.querySelector<HTMLElement>('#panel-title')?.hidden).toBe(true);
+    expect(document.querySelector('#panel-title')?.textContent).toBe('Discussion générale du document');
     expect(document.querySelector('#new-discussion')).toBeNull();
     expect(document.querySelector('#new-pr')).toBeNull();
 
@@ -42,6 +44,7 @@ describe('static reader', () => {
     render(configured, document, paragraph);
     expect(document.querySelectorAll('.unit')).toHaveLength(1);
     expect(document.querySelector<HTMLElement>('.document-meta')?.hidden).toBe(true);
+    expect(document.querySelector<HTMLElement>('.invitation')?.hidden).toBe(true);
     expect(document.querySelector('#units blockquote')?.innerHTML).toBe(paragraph.html);
     expect(document.querySelectorAll('blockquote')).toHaveLength(1);
     expect(document.querySelector('#units')?.previousElementSibling?.id).toBe('panel-title');

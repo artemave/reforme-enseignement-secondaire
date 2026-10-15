@@ -32,7 +32,7 @@ function sectionHtml(index: AnnotationIndex, target: Unit): string {
 
 function openDiscussion(index: AnnotationIndex, root: Document, unit: Unit): void {
   const annotations = index.annotations.filter((item) => item.kind === 'discussion');
-  element<HTMLElement>(root, '#panel-title').textContent = unit.kind === 'paragraph' ? 'Discussion du paragraphe' : unit.kind === 'section' ? 'Discussion de la section' : unit.label;
+  element<HTMLElement>(root, '#panel-title').textContent = unit.kind === 'paragraph' ? 'Discussion du paragraphe' : unit.kind === 'section' ? 'Discussion de la section' : 'Discussion générale du document';
   const items = element<HTMLElement>(root, '#items'); items.replaceChildren();
   const matching = annotations.filter((item) => item.targetId === unit.id);
   const show = (selected: Annotation | Unit): void => {
@@ -62,8 +62,9 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
   units.replaceChildren(); contents.replaceChildren();
   root.querySelectorAll('[data-document-back]').forEach((back) => { back.remove(); });
   element<HTMLElement>(root, '.document-meta').hidden = target !== undefined;
+  element<HTMLElement>(root, '.invitation').hidden = target !== undefined;
   element<HTMLElement>(root, '.site-header').hidden = target !== undefined;
-  element<HTMLAnchorElement>(root, '#how-it-works').href = new URL('comment-ca-marche/', root.baseURI).href;
+  for (const help of root.querySelectorAll<HTMLAnchorElement>('#how-it-works, #invitation-help')) help.href = new URL('comment-ca-marche/', root.baseURI).href;
   element<HTMLElement>(root, '#updated').textContent = `Actualisé le ${new Intl.DateTimeFormat('fr', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(index.generatedAt))}`;
   for (const unit of index.units) {
     const row = root.createElement('section'); row.id = unit.id; row.className = `unit ${unit.kind}`;
@@ -90,7 +91,6 @@ export function render(index: AnnotationIndex, root: Document, target?: Unit): v
   }
   const selected = target ?? index.units.find((unit) => unit.kind === 'title');
   discussionPage.hidden = selected === undefined;
-  element<HTMLElement>(root, '#panel-title').hidden = target === undefined;
   units.after(discussionPage);
   if (selected !== undefined) openDiscussion(index, root, selected);
   if (target !== undefined) {

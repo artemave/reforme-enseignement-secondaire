@@ -18,6 +18,7 @@ it.each(['', 'passage/hash/u-2/', 'comment-ca-marche/'])('publishes %s before Ja
   const first = main?.firstElementChild;
   expect(content).not.toContain('Chargement');
   expect(root.querySelector<HTMLElement>('.site-header')?.hidden).toBe(path !== '');
+  expect(root.querySelector('.invitation:not([hidden])') !== null).toBe(path === '');
   const fetcher = fetchQueue(configured);
   await load(root, fetcher);
   expect(fetcher).toHaveBeenCalledWith('./annotations.json', { cache: 'no-store' });

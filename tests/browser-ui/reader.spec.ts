@@ -13,6 +13,7 @@ test('The reader fits the screen and its navigation, annotations and contributio
   await test.step('The document and section navigation fit the viewport', async () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.locator('.document-meta')).toBeVisible();
+    await expect(page.locator('.invitation')).toContainText('Document de travail ouvert à la discussion');
     await expect(page.locator('.site-header')).toBeVisible();
     await activate(page.locator('.document-footer').getByRole('link', { name: 'Comment ça marche' }));
     await expect(page.getByRole('heading', { name: 'Comment ça marche' })).toBeVisible();
